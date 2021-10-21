@@ -28,10 +28,11 @@
 
 using namespace std;
 
-extern double E0, Q2_min, Q2_max, W_min, W_max, cos_min, cos_max, W_p, Q2_p, cos_p, phi_p;
-extern bool h_L, average;
+extern double E0, Q2_min, Q2_max, W_min, W_max, cos_min, cos_max, phi_min, phi_max;
+extern bool h_L;
 
 extern double m_p, m_K, m_S, m_L; 
+extern int number;
 
 extern vector<vector<double>> Data;
 extern vector<vector<double>> Data2;
@@ -55,5 +56,5 @@ vector<double> giveData(const double& W, const double& Q2, const double& cos);
 vector<double> giveData2(const double& W, const double& Q2, const double& cos);
 vector<double> giveData3(const double& W, const double& Q2, const double& cos);
 vector<double> Str_func(const double& W, const double& Q2, const double& cos);
-vector<double> Average_diff(const double& W, const double& Q2, const double& cos);
-void Point_diff();
+vector<double> Point_diff(const double& W, const double& Q2, const double& cos, const double& phi);
+double error_handler(vector<double>& V, const double& average);

@@ -2,11 +2,10 @@
 
 using namespace std;
 
-double E0(2.567), Q2_min(0), Q2_max(0), W_min(0), W_max(0), cos_min(0), cos_max(0);
-double W_p(0), Q2_p(0), cos_p(0), phi_p(0);
-bool h_L(true), average(false);
+double E0(2.567), Q2_min(0), Q2_max(0), W_min(0), W_max(0), cos_min(0), cos_max(0), phi_min(0), phi_max(0);
+bool h_L(true);
 
-bool cubic, cub_err, exp_term;
+int number(3);
 
 vector<vector<double>> Data;
 vector<vector<double>> Data2;
@@ -56,22 +55,19 @@ void Reading(string Path, vector<vector<double>>& V)
 
 void input_check(int argc, char* argv[])
 {
-	const char* short_options = "e:haz:x:c:v:b:n:u:i:o:p:"; int rez; int option_index;
+	const char* short_options = "e:hz:x:c:v:b:n:u:i:o:p:m:l:"; int rez; int option_index;
 	
 	const struct option long_options[] = {
 						{"beam_energy", required_argument, NULL, 'e'},
 	        				{"KSigma0", no_argument, NULL, 'h'},
-	        				{"average", no_argument, NULL, 'a'},
 	        				{"Q2_min", required_argument, NULL, 'z'},
 	        				{"Q2_max", required_argument, NULL, 'x'},
 	        				{"W_min", required_argument, NULL, 'c'},
 	        				{"W_max", required_argument, NULL, 'v'},
 	        				{"cos_min", required_argument, NULL, 'b'},
 	        				{"cos_max", required_argument, NULL, 'n'},
-	        				{"W", required_argument, NULL, 'u'},
-	        				{"Q2", required_argument, NULL, 'i'},
-	        				{"cos", required_argument, NULL, 'o'},
-	        				{"phi", required_argument, NULL, 'p'},
+	        				{"phi_min", required_argument, NULL, 'm'},
+	        				{"phi_max", required_argument, NULL, 'l'},
 	        				{NULL, 0, NULL, 0}
 								};
 	while ((rez=getopt_long(argc, argv, short_options, long_options, &option_index)) != -1)
@@ -84,10 +80,6 @@ void input_check(int argc, char* argv[])
 			};
 			case 'h': {
 				h_L = false;
-				break;
-			};
-			case 'a': {
-				average = true;
 				break;
 			};
 			case 'z': {
@@ -114,20 +106,12 @@ void input_check(int argc, char* argv[])
 				cos_max = atof(optarg);
 				break;
 			};
-			case 'u': {
-				W_p = atof(optarg);
+			case 'm': {
+				phi_min = M_PI*atof(optarg)/180;
 				break;
 			};
-			case 'i': {
-				Q2_p = atof(optarg);
-				break;
-			};
-			case 'o': {
-				cos_p = atof(optarg);
-				break;
-			};
-			case 'p': {
-				phi_p = atof(optarg);
+			case 'l': {
+				phi_max = M_PI*atof(optarg)/180;
 				break;
 			};
 			case '?': default: {
@@ -137,6 +121,8 @@ void input_check(int argc, char* argv[])
 		};
 	};
 	
+	if(W_min == 0) W_min = 1.8;
+	if(Q2_min == 0) Q2_min = 0.65;
 	if(Q2_max < Q2_min) Q2_max = Q2_min + 0.05;
 	if(W_max < W_min) W_max = W_min + 0.01;
 	if(cos_max < cos_min) cos_max = cos_min + 0.01;
@@ -144,23 +130,96 @@ void input_check(int argc, char* argv[])
 	if(cos_min > 1) cos_min = 1;
 	if(cos_max < -1) cos_max = -1;
 	if(cos_max > 1) cos_max = 1;
-	if(cos_p < -1) cos_p = -1;
-	if(cos_p > 1) cos_p = 1;
+	if(phi_min < 0) phi_min = 0;
+	if(phi_min > 2*M_PI) phi_min = 2*M_PI;
+	if(phi_max < 0) phi_max = 0;
+	if(phi_max > 2*M_PI) phi_max = 2*M_PI;
 	
 	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
 	if(h_L) cout << "Channel: KL" << endl;
 	else cout << "Channel: KS" << endl;
-	if(average)
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 in [";
-		cout << Q2_min << ", " << Q2_max << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n" << endl; 
-	} else
+	if((Q2_max == Q2_min) && (W_max == W_min) && (cos_min == cos_max) && (phi_min == phi_max))
 	{
 		cout << "\nDiff. cross section calculation option: Point" << endl;
-		cout << "W = " << W_p << " GeV\nQ2 = " << Q2_p << " GeV2\ncos = " << cos_p << "\nphi = " << phi_p << " grad\n" << endl;
+		cout << "\tW = " << W_max << " GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max == Q2_min) && (W_max == W_min) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if((Q2_max == Q2_min) && (W_max == W_min) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n"; 
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max == Q2_min) && !(W_max == W_min) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl; 
+	} else if(!(Q2_max == Q2_min) && (W_max == W_min) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl; 
+	} else if((Q2_max == Q2_min) && (W_max == W_min) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if((Q2_max == Q2_min) && !(W_max == W_min) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if(!(Q2_max == Q2_min) && (W_max == W_min) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if((Q2_max == Q2_min) && !(W_max == W_min) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n"; 
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max == Q2_min) && (W_max == W_min) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n"; 
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max == Q2_min) && !(W_max == W_min) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl; 
+	} else if((Q2_max == Q2_min) && !(W_max == W_min) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 = " << Q2_max << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if(!(Q2_max == Q2_min) && (W_max == W_min) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max << " GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if(!(Q2_max == Q2_min) && !(W_max == W_min) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;	
+	} else if(!(Q2_max == Q2_min) && !(W_max == W_min) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n"; 
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max == Q2_min) && !(W_max == W_min) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min << ", " << W_max << "] GeV\n\tQ2 in [" << Q2_min << ", " << Q2_max << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t"; 
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
 	}	
-}
+}	
 
 double fRand(const double& fMin, const double& fMax)
 {
@@ -219,11 +278,8 @@ vector<double> cub_interp(vector<vector<double>>& V, const double x)
 	delta = (x2 - x3)*(x1 - x2)*(x1 - x3);
 	
 	a = ((x2 - x3)*y1 + (x3 - x1)*y2 + (x1 - x2)*y3)/delta;
-	//da = sqrt(pow((x2 - x3)*dy1, 2) + pow((x3 - x1)*dy2, 2) + pow((x1 - x2)*dy3, 2))/abs(delta);
 	b = ((x3*x3 - x2*x2)*y1 + (x1*x1 - x3*x3)*y2 + (x2*x2 - x1*x1)*y3)/delta;
-	//db = sqrt(pow((x3*x3 - x2*x2)*dy1, 2) + pow((x1*x1 - x3*x3)*dy2, 2) + pow((x2*x2 - x1*x1)*dy3, 2))/abs(delta);
 	c = (x2*x3*(x2 - x3)*y1 + x1*x3*(x3 - x1)*y2 + x1*x2*(x1 - x2)*y3)/delta;
-	//dc = sqrt(pow(x2*x3*(x2 - x3)*dy1, 2) + pow(x1*x3*(x3 - x1)*dy2, 2) + pow(x1*x2*(x1 - x2)*dy3, 2))/abs(delta);
 	
 	f = a*x*x + b*x + c;
 	
@@ -287,14 +343,7 @@ vector<double> interp_cub(vector<vector<double>>& V, const double& cos, const bo
 	buff = cub_interp(transit, cos);
 	
 	func = buff[0];
-	
-	if(cos < V[0][0])
-	{
-		dfunc = -(V[0][2])*cos/(V[0][0]+1) + 2*V[0][2] - (V[0][2])/(V[0][0]+1);
-	} else
-	{
-		dfunc = buff[1];
-	}	
+	dfunc = buff[1];
 	
 	if(func < 0 and statement){func = 0;}
 	
@@ -309,12 +358,11 @@ vector<double> approx_cos_leg(vector<vector<double>>& V, const double& cos, cons
 	vector<double> result;
 	double func, dfunc;
 	double arg; arg = cos;
+	vector<double> buff;
 	
 	double *X = new double[V.size()]; 
 	double *Y = new double[V.size()];
 	double *dY = new double[V.size()]; int count(0);
-	
-	if(cos < V[0][0]) arg = V[0][0];
 	
 	for(auto i:V)
 	{
@@ -350,9 +398,25 @@ ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3)
 	dfunc = sqrt(pow(dA, 2) + pow(arg*dB, 2) + pow(dC*0.5*(3*pow(arg,2) - 1), 2) + pow(dD*0.5*(5*pow(arg,3) - 3*arg), 2) + pow(dE*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8, 2));
 	
 	if(func < 0 and statement){func = 0;}
+	buff = interp_cub(V, cos, statement);
+	dfunc = buff[1];
+	if(cos < V[0][0])
+	{
+		if(number == 2)
+		{
+			func = buff[0];
+		}
+		
+		if(number == 3)
+		{
+			dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
+			func = (func+buff[0])/2; 
+		}				
+	}
+	
 	
 	result.push_back(func);
-	result.push_back(dfunc);
+	result.push_back(dfunc); buff.clear();
 	
 	return result;
 }
@@ -568,24 +632,16 @@ vector<double> giveData(const double& W, const double& Q2, const double& cos)
 	} 	 
 	
 	buff = approx_cos_leg(pack_1, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_1, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_2, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_2, cos, true);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_3, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_3, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_4, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_4, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 		
 	if(W_min == W_max)
 	{
@@ -623,24 +679,16 @@ vector<double> giveData(const double& W, const double& Q2, const double& cos)
 	pack_1.clear(); pack_2.clear(); pack_3.clear(); pack_4.clear(); buff.clear();
 
 	buff = approx_cos_leg(pack_5, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_5, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_6, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_6, cos, true);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_7, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_7, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_8, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_8, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	
 	if(W_min == W_max)
@@ -679,24 +727,16 @@ vector<double> giveData(const double& W, const double& Q2, const double& cos)
 	pack_5.clear(); pack_6.clear(); pack_7.clear(); pack_8.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_9, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_9, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_10, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_10, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_11, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_11, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_12, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_12, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -734,24 +774,16 @@ vector<double> giveData(const double& W, const double& Q2, const double& cos)
 	pack_9.clear(); pack_10.clear(); pack_11.clear(); pack_12.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_13, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_13, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_14, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_14, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_15, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_15, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_16, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_16, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -967,24 +999,16 @@ vector<double> giveData2(const double& W, const double& Q2, const double& cos)
 	} 
 		
 	buff = approx_cos_leg(pack_1, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_1, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_2, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_2, cos, true);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_3, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_3, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_4, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_4, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1022,24 +1046,16 @@ vector<double> giveData2(const double& W, const double& Q2, const double& cos)
 	pack_1.clear(); pack_2.clear(); pack_3.clear(); pack_4.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_5, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_5, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_6, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_6, cos, true);
-	dy2 = buff[1]; buff.clear();
-		
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
+
 	buff = approx_cos_leg(pack_7, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_7, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_8, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_8, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1077,24 +1093,16 @@ vector<double> giveData2(const double& W, const double& Q2, const double& cos)
 	pack_5.clear(); pack_6.clear(); pack_7.clear(); pack_8.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_9, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_9, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_10, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_10, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_11, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_11, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_12, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_12, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1132,24 +1140,16 @@ vector<double> giveData2(const double& W, const double& Q2, const double& cos)
 	pack_9.clear(); pack_10.clear(); pack_11.clear(); pack_12.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_13, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_13, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_14, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_14, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_15, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_15, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_16, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_16, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1345,24 +1345,16 @@ vector<double> giveData3(const double& W, const double& Q2, const double& cos)
 	} 
 	
 	buff = approx_cos_leg(pack_1, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_1, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_2, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_2, cos, true);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_3, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_3, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_4, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_4, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1400,24 +1392,16 @@ vector<double> giveData3(const double& W, const double& Q2, const double& cos)
 	pack_1.clear(); pack_2.clear(); pack_3.clear(); pack_4.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_5, cos, true);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_5, cos, true);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_6, cos, true);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_6, cos, true);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_7, cos, true);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_7, cos, true);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_8, cos, true);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_8, cos, true);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1455,24 +1439,16 @@ vector<double> giveData3(const double& W, const double& Q2, const double& cos)
 	pack_5.clear(); pack_6.clear(); pack_7.clear(); pack_8.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_9, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_9, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_10, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_10, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_11, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_11, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_12, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_12, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1510,24 +1486,16 @@ vector<double> giveData3(const double& W, const double& Q2, const double& cos)
 	pack_9.clear(); pack_10.clear(); pack_11.clear(); pack_12.clear(); buff.clear();
 	
 	buff = approx_cos_leg(pack_13, cos, false);
-	y1 = buff[0]; buff.clear(); 
-	buff = interp_cub(pack_13, cos, false);
-	dy1 = buff[1]; buff.clear(); 
+	y1 = buff[0]; dy1 = buff[1]; buff.clear(); 
 		
 	buff = approx_cos_leg(pack_14, cos, false);
-	y2 = buff[0]; buff.clear();
-	buff = interp_cub(pack_14, cos, false);
-	dy2 = buff[1]; buff.clear();
+	y2 = buff[0]; dy2 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_15, cos, false);
-	y3 = buff[0]; buff.clear();
-	buff = interp_cub(pack_15, cos, false);
-	dy3 = buff[1]; buff.clear();
+	y3 = buff[0]; dy3 = buff[1]; buff.clear();
 		
 	buff = approx_cos_leg(pack_16, cos, false);
-	y4 = buff[0]; buff.clear();
-	buff = interp_cub(pack_16, cos, false);
-	dy4 = buff[1]; buff.clear();
+	y4 = buff[0]; dy4 = buff[1]; buff.clear();
 	
 	if(W_min == W_max)
 	{
@@ -1687,53 +1655,33 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos)
 	return result;	
 }
 
-void Point_diff()
-{
-	double f, df;
-	vector<double> S;
-	
-	S = Str_func(W_p, Q2_p, cos_p);
-	
-	f = S[0] + eps(W_p, Q2_p)*S[2] + eps(W_p, Q2_p)*S[6]*cos(2*phi_p*M_PI/180) + sqrt(eps(W_p, Q2_p)*(eps(W_p, Q2_p) + 1))*S[4]*cos(phi_p*M_PI/180);
-	if(f < 0) f = 0;
-	df = sqrt(S[1]*S[1] + pow(eps(W_p, Q2_p)*S[3], 2) + pow(eps(W_p, Q2_p)*S[7]*cos(2*phi_p*M_PI/180), 2) + pow(sqrt(eps(W_p, Q2_p)*(eps(W_p, Q2_p) + 1))*S[5]*cos(phi_p*M_PI/180), 2));
-
-	cout << "dS/dOmega_gamma = " << f << " +- " << df << endl;  
-	S.clear();
-}
-
-vector<double> Average_diff(const double& W, const double& Q2, const double& cos)
+vector<double> Point_diff(const double& W, const double& Q2, const double& cos, const double& phi)
 {
 	double f, df;
 	vector<double> S, result;
 	
 	S = Str_func(W, Q2, cos);
 	
-	f = S[0] + eps(W_p, Q2_p)*S[2];
-	df = sqrt(S[1]*S[1] + pow(eps(W_p, Q2_p)*S[3], 2));
+	f = S[0] + eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
+	if(f < 0) f = 0;
+	df = sqrt(S[1]*S[1] + pow(eps(W, Q2)*S[3], 2) + pow(eps(W, Q2)*S[7]*std::cos(2*phi), 2) + pow(sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[5]*std::cos(phi), 2));
+
+	S.clear();
 	
 	result.push_back(f);
 	result.push_back(df);
-
-	S.clear();	
-	
+		
 	return result;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+double error_handler(vector<double>& V, const double& average)
+{
+	double result(0);
+	
+	for(auto i:V)
+	{
+		result += pow(i - average, 2);
+	}
+	
+	return sqrt(result/(V.size() - 1));
+}
