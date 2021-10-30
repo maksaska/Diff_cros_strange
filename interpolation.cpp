@@ -1683,5 +1683,5 @@ double error_handler(vector<double>& V, const double& average)
 		result += pow(i - average, 2);
 	}
 	
-	return sqrt(result/(V.size() - 1));
+	return sqrt(result/(V.size()*(V.size() - 1)));
 }

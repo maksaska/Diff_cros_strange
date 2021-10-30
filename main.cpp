@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		Transfer(buff, Data3); buff.clear();
 	}
 	
-	while(increment > 0.0000001)
+	while(increment > 0.00000001)
 	{
 		W = fRand(W_min, W_max);
 		Q2 = fRand(Q2_min, Q2_max);
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 		f_prev = f_av;
 		df_prev = df_av; j++; 
 			
-		cout << "Convergence: " << floor((1 - increment)*1000000+0.1)/10000 << "%      \r" << flush;
+		cout << "Convergence: " << floor((1 - increment)*10000000+0.1)/100000 << "%      \r" << flush;
 	}	
 	error_stat = error_handler(holder, f_av);	
 	cout << "\ndS/dOmega_gamma_av = " << f_av << " +- " << sqrt(pow(df_av, 2) + pow(error_stat, 2)) << endl; 
