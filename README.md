@@ -66,8 +66,8 @@ The default values of these variables are zero, so you always need to specify th
 
 ## Availables areas of (W, Q2) for each channel
 <a href="https://www.codecogs.com/eqnedit.php?latex=K\Lambda" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Lambda" title="K\Lambda" /></a>:
-<img src="/pic/KL_int.jpg" alt="KL"/>
+<img src="/pic/KL_extra.png" alt="KL"/>
 <a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Sigma^0" title="K\Sigma^0" /></a>:
-<img src="/pic/KS_int.jpg" alt="KS"/>
+<img src="/pic/KS_extra.png" alt="KS"/>
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=maksaska&label=Profile%20views&color=0e75b6&style=flat" alt="maksaska" /> <img src="https://img.shields.io/badge/MSU-SINP-blue" /> <img src="https://img.shields.io/badge/JLab-red" /> </p>
