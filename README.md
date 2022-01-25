@@ -64,7 +64,7 @@ The default values of these variables are zero, so you always need to specify th
 > 
 > Meaning: <a href="https://www.codecogs.com/eqnedit.php?latex=K\Lambda" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Lambda" title="K\Lambda" /></a> channel, point-like cross section calculation, <a href="https://www.codecogs.com/eqnedit.php?latex=E_{beam}&space;=&space;6.5\;\text{GeV},\;W&space;=&space;1.8\;\text{GeV},\;Q^2&space;=&space;0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi&space;=&space;180^{\degree}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?E_{beam}&space;=&space;6.5\;\text{GeV},\;W&space;=&space;1.8\;\text{GeV},\;Q^2&space;=&space;0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi&space;=&space;180^{\degree}" title="E_{beam} = 6.5\;\text{GeV},\;W = 1.8\;\text{GeV},\;Q^2 = 0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi = 180^{\degree}" /></a>
 
-## Availables areas of (W, Q2) for each channel
+## Available areas of (W, Q^{2}) for each channel
 <a href="https://www.codecogs.com/eqnedit.php?latex=K\Lambda" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Lambda" title="K\Lambda" /></a>:
 <img src="/pic/KL_extra.png" alt="KL"/>
 <a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Sigma^0" title="K\Sigma^0" /></a>:
