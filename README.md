@@ -26,9 +26,7 @@ To work with <a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" targ
 
 * 2 modes of operation are initialized in the program:
   * Cross section calculation at the given point <a href="https://www.codecogs.com/eqnedit.php?latex=(W,&space;Q^2,&space;\cos{\theta},&space;\varphi)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(W,&space;Q^2,&space;\cos{\theta},&space;\varphi)" title="(W, Q^2, \cos{\theta}, \varphi)" /></a>
-  * Average cross section calculation for a given area of <a href="https://www.codecogs.com/eqnedit.php?latex=W" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W" title="W" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=Q^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Q^2" title="Q^2" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a>, and <a href="https://www.codecogs.com/eqnedit.php?latex=\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\varphi" title="\varphi" /></a>. As we are fitting the data along the <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a> axis, you can use any value from [-1, 1]. 
-
-Below you can find 2 graphs with an accessible area of <a href="https://www.codecogs.com/eqnedit.php?latex=(W,&space;Q^2)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(W,&space;Q^2)" title="(W, Q^2)" /></a> for each channel.
+  * Average cross section calculation for a given area of <a href="https://www.codecogs.com/eqnedit.php?latex=W" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W" title="W" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=Q^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Q^2" title="Q^2" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a>, and <a href="https://www.codecogs.com/eqnedit.php?latex=\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\varphi" title="\varphi" /></a>. 
 
 ## Average calculation
 For this mode of operation, the program requires the boundaries values of the <a href="https://www.codecogs.com/eqnedit.php?latex=W,\;Q^2,\;\cos{\theta},\;\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W,\;Q^2,\;\cos{\theta},\;\varphi" title="W,\;Q^2,\;\cos{\theta},\;\varphi" /></a> intervals. They are all zero by default.
@@ -63,11 +61,3 @@ The default values of these variables are zero, so you always need to specify th
 > An example: ./start -e 6.5 --W_min=1.8 --W_max=1.8 --Q2_min=0.9 --Q2_max=0.9 --cos_min=0.1 --cos_max=0.1 --phi_min=180 --phi_max=180
 > 
 > Meaning: <a href="https://www.codecogs.com/eqnedit.php?latex=K\Lambda" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Lambda" title="K\Lambda" /></a> channel, point-like cross section calculation, <a href="https://www.codecogs.com/eqnedit.php?latex=E_{beam}&space;=&space;6.5\;\text{GeV},\;W&space;=&space;1.8\;\text{GeV},\;Q^2&space;=&space;0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi&space;=&space;180^{\degree}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?E_{beam}&space;=&space;6.5\;\text{GeV},\;W&space;=&space;1.8\;\text{GeV},\;Q^2&space;=&space;0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi&space;=&space;180^{\degree}" title="E_{beam} = 6.5\;\text{GeV},\;W = 1.8\;\text{GeV},\;Q^2 = 0.9\;\text{GeV$^2$},\;\cos{\theta}=0.1,\;\varphi = 180^{\degree}" /></a>
-
-## Available areas of (W, Q^{2}) for each channel
-<a href="https://www.codecogs.com/eqnedit.php?latex=K\Lambda" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Lambda" title="K\Lambda" /></a>:
-<img src="/pic/KL_extra.png" alt="KL"/>
-<a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?K\Sigma^0" title="K\Sigma^0" /></a>:
-<img src="/pic/KS_extra.png" alt="KS"/>
-
-<p align="left"> <img src="https://komarev.com/ghpvc/?username=maksaska&label=Profile%20views&color=0e75b6&style=flat" alt="maksaska" /> <img src="https://img.shields.io/badge/MSU-SINP-blue" /> <img src="https://img.shields.io/badge/JLab-red" /> </p>
