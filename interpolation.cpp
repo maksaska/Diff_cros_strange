@@ -129,8 +129,8 @@ void input_check(int argc, char* argv[])
 
 	double srand(seed);
 
-	if(W_min_ == 0) W_min_ = 1.8;
-	if(Q2_min_ == 0) Q2_min_ = 0.65;
+    if(W_min_ < 1.5) W_min_ = 1.61;
+	if(Q2_min_ < 0) Q2_min_ = 0;
 	if(Q2_max_ < Q2_min_) Q2_max_ = Q2_min_ + 0.05;
 	if(W_max_ < W_min_) W_max_ = W_min_ + 0.01;
 	if(cos_max < cos_min) cos_max = cos_min + 0.01;
@@ -473,13 +473,21 @@ ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3)
 
 	dfunc = buff[1];
 
-	/*if(cos_th < V[0][0]) //number == 3
-	{
-		dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
-		func = (func+buff[0])/2;
-	}*/
-
 	if(cos_th < V[0][0])
+	{
+		arg = V[0][0];
+		dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
+		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
+	}
+
+	if(cos_th > V[V.size()-1][0])
+	{
+		arg = V[V.size()-1][0];
+		dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
+		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
+	}
+
+	/*if(cos_th < V[0][0])
 	{
 		dfunc = V[0][2];
 		func = V[0][1];
@@ -489,7 +497,7 @@ ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3)
 	{
 		dfunc = V[V.size()-1][2];
 		func = V[V.size()-1][1];
-	}
+	}*/
 
 	result.push_back(func);
 	result.push_back(dfunc); buff.clear();
@@ -880,6 +888,24 @@ vector<double> giveData2(const double& W, const double& Q2, const double& cos_th
 	{
 		W_min = 2.05;
 		W_max = 2.15;
+	}
+
+	if(abs(W - 1.65) < 1e-9)
+	{
+		W_min = 1.65;
+		W_max = 1.75;
+	}
+
+	if(abs(W - 1.75) < 1e-9)
+	{
+		W_min = 1.75;
+		W_max = 1.85;
+	}
+
+	if(abs(W - 2.35) < 1e-9)
+	{
+		W_min = 2.25;
+		W_max = 2.35;
 	}
 
 	for(auto i:Data2)
@@ -1532,7 +1558,7 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[1]);
 	Block.push_back(line); line.clear();
 
-	result = cub_interp_err(Block, Q2); Block.clear();
+	result = cub_interp(Block, Q2); Block.clear();
 
 	line.push_back(0);
 	line.push_back(0);
@@ -1550,7 +1576,7 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[3]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1570,7 +1596,7 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[5]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1614,7 +1640,7 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[7]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1819,7 +1845,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 		return result;
 	}
 
-	if(Q2 < 3.45)
+	if(Q2 < 3.45 and isW3(W))
 	{
 		buff = lower_Q2_int(W, Q2, cos_th);
 
@@ -1844,7 +1870,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 		return result;
 	}
 
-	if(Q2 > 3.45)
+	if(Q2 > 3.45 and isW3(W))
 	{
 		buff = higher_Q2_int(W, Q2, cos_th);
 
@@ -1881,12 +1907,178 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 	return result;
 }
 
+vector<double> Cubic_fit(vector<vector<double>>& V, const double& W)
+{
+	vector<double> result;
+	double func, dfunc;
+	double arg = W;
+	vector<double> buff;
+
+	double *X = new double[V.size()];
+	double *Y = new double[V.size()];
+	double *dY = new double[V.size()]; int count(0);
+
+	for(auto i:V)
+	{
+			X[count] = i[0];
+			Y[count] = i[1];
+			dY[count] = i[2]; count++;
+	}
+
+	TGraphErrors* gr;
+	gr = new TGraphErrors(V.size(), X, Y, NULL, dY);
+
+	double left, right;
+
+	if(W < 2.0)
+	{
+		left = W;
+		right = V[V.size()-1][0];
+	}
+	else
+	{
+		left = V[0][0];
+		right = W;
+	}
+
+	TF1 *ff;
+	ff = new TF1("ff", "[0] + [1]*x + [2]*x*x + [3]*x*x*x", left, right);
+	gr->Fit(ff, "Q");
+
+	double A = ff->GetParameter(0);
+	double B = ff->GetParameter(1);
+	double C = ff->GetParameter(2);
+	double D = ff->GetParameter(3);
+
+	double dA = ff->GetParError(0);
+	double dB = ff->GetParError(1);
+	double dC = ff->GetParError(2);
+	double dD = ff->GetParError(3);
+
+	delete [] X; delete [] Y; delete [] dY;
+	ff->Clear(); delete ff;
+	gr->Clear(); delete gr;
+
+	func =  A + B*arg + C*arg*arg + D*arg*arg*arg;
+	//dfunc = sqrt(pow(dA, 2) + pow(dB/arg, 2) + pow(dC/(arg*arg), 2));
+
+	buff = interp_cub(V, W, true);
+
+	dfunc = buff[1];
+
+	result.push_back(func);
+	result.push_back(dfunc); buff.clear();
+
+	return result;
+}
+
+vector<double> extrapolate_W(const double& W, const double& Q2, const double& cos_th)
+{
+	vector<double> result;
+
+	vector<double> buff1, buff2, buff3, buff4, buff;
+	vector<vector<double>> Block;
+
+	double W1, W2, W3, W4;
+
+	if(W < 2.0)
+	{
+		if(h_L)
+		{
+			if(Q2 < 1.0)
+			{
+				W1 = 1.65; W2 = 1.725; W3 = 1.775; W4 = 1.825;
+			}
+			else if(Q2 >= 1.0 and Q2 < 1.8)
+			{
+				W1 = 1.65; W2 = 1.75; W3 = 1.85; W4 = 1.95;
+			}
+			else if(Q2 >= 1.8)
+			{
+				W1 = 1.63; W2 = 1.675; W3 = 1.725; W4 = 1.775;
+			}
+		}
+		else
+		{
+			if(Q2 < 1.0)
+			{
+				W1 = 1.725; W2 = 1.775; W3 = 1.825; W4 = 1.875;
+			}
+			else if(Q2 >= 1.0 and Q2 < 1.8)
+			{
+				W1 = 1.75; W2 = 1.85; W3 = 1.95; W4 = 2.05;
+			}
+			else if(Q2 >= 1.8)
+			{
+				W1 = 1.695; W2 = 1.725; W3 = 1.775; W4 = 1.825;
+			}
+
+		}
+	}
+	else
+	{
+		//W1 = 2.425; W2 = 2.475; W3 = 2.525; W4 = 2.575;
+		W1 = 2.025; W2 = 2.275; W3 = 2.425; W4 = 2.575;
+	}
+
+	buff1 = Str_func(W1, Q2, cos_th);
+	buff2 = Str_func(W2, Q2, cos_th);
+	buff3 = Str_func(W3, Q2, cos_th);
+	buff4 = Str_func(W4, Q2, cos_th);
+
+	for(int i = 0; i < 8; i += 2)
+	{
+		buff.push_back(W1);
+		buff.push_back(buff1[i]);
+		buff.push_back(buff1[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W2);
+		buff.push_back(buff2[i]);
+		buff.push_back(buff2[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W3);
+		buff.push_back(buff3[i]);
+		buff.push_back(buff3[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W4);
+		buff.push_back(buff4[i]);
+		buff.push_back(buff4[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff = Cubic_fit(Block, W);
+
+		result.push_back(buff[0]);
+		result.push_back(buff[1]);
+
+		Block.clear();
+	}
+
+	buff1.clear(); buff2.clear(); buff3.clear(); buff4.clear(); Block.clear();
+	buff.clear();
+
+	return result;
+}
+
+vector<double> Str_func_all(const double& W, const double& Q2, const double& cos_th)
+{
+	vector<double> result;
+
+	if(isW3(W)) result = Str_func(W, Q2, cos_th);
+	else result = extrapolate_W(W, Q2, cos_th);
+
+	return result;
+}
+
 vector<double> Point_diff(const double& W, const double& Q2, const double& cos_th, const double& phi)
 {
 	double f, df;
 	vector<double> S, result;
 
-	S = Str_func(W, Q2, cos_th);
+	if(isW3(W)) S = Str_func(W, Q2, cos_th);
+	else S = extrapolate_W(W, Q2, cos_th);
 
 	f = S[0] + eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
 
@@ -1908,6 +2100,8 @@ double error_handler(vector<double>& V, const double& average)
 {
 	double result(0);
 
+	if(V.size() == 1) return 0;
+
 	for(auto i:V)
 	{
 		result += pow(i - average, 2);
@@ -1925,25 +2119,42 @@ vector<double> Average_CS()
 	vector<double> result;
 
 	double W, Q2, cos_th, phi;
-	int j = 1; double cs(0), d_cs(0);
+	unsigned long long int j = 1; double cs(0), d_cs(0);
 	vector<double> f, holder;
 
-	int barier = int(1000000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
+	unsigned long long int barier(1);
 
-	while(j < barier)
+	if(W_max_ == W_min_) barier = int(10000*(Q2_max_ - Q2_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
+	if(Q2_max_ == Q2_min_) barier = int(10000*(W_max_ - W_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
+	if(cos_max == cos_min) barier = int(10000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(phi_max - phi_min)*180/M_PI);
+	if(phi_max == phi_min) barier = int(1000000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(cos_max - cos_min));
+
+	if(W_max_ == W_min_ and Q2_max_ == Q2_min_) barier = int(100*(cos_max - cos_min)*(phi_max - phi_min)*180/M_PI);
+	if(W_max_ == W_min_ and phi_max == phi_min) barier = int(100*(Q2_max_ - Q2_min_)*100*(cos_max - cos_min));
+	if(Q2_max_ == Q2_min_ and phi_max == phi_min) barier = int(100*(W_max_ - W_min_)*100*(cos_max - cos_min));
+	if(W_max_ == W_min_ and cos_max == cos_min) barier = int(100*(Q2_max_ - Q2_min_)*(phi_max - phi_min)*180/M_PI);
+	if(Q2_max_ == Q2_min_ and cos_max == cos_min) barier = int(100*(W_max_ - W_min_)*(phi_max - phi_min)*180/M_PI);
+	if(phi_max == phi_min and cos_max == cos_min) barier = int(100*(W_max_ - W_min_)*100*(Q2_max_ - Q2_min_));
+
+	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and phi_max == phi_min) barier = int(100*(cos_max - cos_min));
+	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and cos_max == cos_min) barier = int((phi_max - phi_min)*180/M_PI);
+	if(W_max_ == W_min_ and phi_max == phi_min and cos_max == cos_min) barier = int(100*(Q2_max_ - Q2_min_));
+	if(Q2_max_ == Q2_min_ and phi_max == phi_min and cos_max == cos_min) barier = int(100*(W_max_ - W_min_));
+
+	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and phi_max == phi_min and cos_max == cos_min) barier = 1;
+
+	if(W_max_ != W_min_ and Q2_max_ != Q2_min_ and phi_max != phi_min and cos_max != cos_min) barier = int(1000000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
+
+	if(barier == 0) barier++;
+
+	while(j <= barier)
 	{
 		W = fRand(W_min_, W_max_);
 		Q2 = fRand(Q2_min_, Q2_max_);
 		cos_th = fRand(cos_min, cos_max);
 		phi = fRand(phi_min, phi_max);
 
-		if(isW3(W)) f = Point_diff(W, Q2, cos_th, phi);
-		else{
-			cout << "Incorrect W!" << endl;
-			result.push_back(0);
-			result.push_back(0);
-			return result;
-		}
+		f = Point_diff(W, Q2, cos_th, phi);
 
 		holder.push_back(f[0]);
 		cs = (cs*(j-1) + f[0])/j;
@@ -1952,13 +2163,13 @@ vector<double> Average_CS()
 		j++; f.clear();
 
 		finish = std::chrono::high_resolution_clock::now();
-		elapsed = (barier - j)*(finish - start)/j;
+		elapsed = (barier - j)*(finish - start)/j; //totalPhysMem
 
 		cout << std::fixed << std::setprecision(2) << "Progress: " << floor(10000*double(j)/double(barier))/100 << "%             Time remain: " << std::fixed << std::setprecision(0) <<   floor(elapsed.count()/3600) << " h ";
 		cout << floor((elapsed.count() - 3600*floor(elapsed.count()/3600))/60) << " min ";
-		cout << std::fixed << std::setprecision(1) << ceil(10*(elapsed.count() - 60*floor(elapsed.count()/60)))/10 << " s             \r" << flush;
+		cout << std::fixed << std::setprecision(1) << ceil(10*(elapsed.count() - 60*floor(elapsed.count()/60)))/10 << " s           \r" << flush;
 	}
-	cout << std::fixed << std::setprecision(2) << endl;
+	cout << std::fixed << std::setprecision(2) << "                                                                                      ";
 	double error_stat = error_handler(holder, cs);
 
 	result.push_back(cs);

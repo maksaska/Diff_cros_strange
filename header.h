@@ -52,6 +52,7 @@ vector<double> cub_interp_err(vector<vector<double>>& V, const double x);
 vector<double> interp_cub(vector<vector<double>>& V, const double& cos, const bool& statement);
 vector<double> approx_cos_leg(vector<vector<double>>& V, const double& cos, const bool& statement);
 vector<double> extrapolate_higher(vector<vector<double>>& V, const double& cos_th, const bool& statement);
+vector<double> Cubic_fit(vector<vector<double>>& V, const double& arg);
 double eps(const double& W, const double& Q2);
 double eps_beam(const double& W, const double& Q2, const double& E_beam);
 bool isData1(const double& W, const double& Q2);
@@ -72,10 +73,11 @@ vector<double> Photo_Sigma(const double& W, const double& cos_th);
 vector<double> Photo_Sigma_TT(const double& W, const double& cos_th);
 vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos_th);
 vector<double> higher_Q2_int(const double& W, const double& Q2, const double& cos_th);
+vector<double> extrapolate_W(const double& W, const double& Q2, const double& cos_th);
 double error_handler(vector<double>& V, const double& average);
 
 /*   ---   Functions you can use  ---   */
 
-vector<double> Str_func(const double& W, const double& Q2, const double& cos); // str. functions St dSt Sl dSl Slt dSlt Stt dStt [nb/sr] in the point (W, Q2, cos)
+vector<double> Str_func_all(const double& W, const double& Q2, const double& cos_th); // str. functions St dSt Sl dSl Slt dSlt Stt dStt [nb/sr] in the point (W, Q2, cos)
 vector<double> Point_diff(const double& W, const double& Q2, const double& cos, const double& phi); // cross section S0 dS0 [nb/sr] in the point (W, Q2, cos)
 vector<double> Average_CS(); // Average cross section [nb/sr]

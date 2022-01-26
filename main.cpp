@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 		 												*/
 
 	/*
-		vector<double> calc = Str_func(W, Q2, cos); str. functions St dSt Sl dSl Slt dSlt Stt dStt [nb/sr] in the point (W, Q2, cos)
+		vector<double> calc = Str_func_all(W, Q2, cos); str. functions St dSt Sl dSl Slt dSlt Stt dStt [nb/sr] in the point (W, Q2, cos)
 		Example: calc[0] - St -> dSigma/dOmega_T value
 				 calc[1] - dSt -> error for dSigma/dOmega_T value
 
