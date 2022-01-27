@@ -2118,32 +2118,23 @@ vector<double> Average_CS()
 
 	vector<double> result;
 
+	int volume_W = int(100*(W_max_ - W_min_));
+	int volume_Q2 = int(10*(Q2_max_ - Q2_min_));
+	int volume_cos = int(10*(cos_max - cos_min));
+ 	int volume_phi = int(0.1*(phi_max - phi_min)*180/M_PI);
+
 	double W, Q2, cos_th, phi;
 	unsigned long long int j = 1; double cs(0), d_cs(0);
 	vector<double> f, holder;
 
 	unsigned long long int barier(1);
 
-	if(W_max_ == W_min_) barier = int(10000*(Q2_max_ - Q2_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
-	if(Q2_max_ == Q2_min_) barier = int(10000*(W_max_ - W_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
-	if(cos_max == cos_min) barier = int(10000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(phi_max - phi_min)*180/M_PI);
-	if(phi_max == phi_min) barier = int(1000000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(cos_max - cos_min));
+	if(W_max_ == W_min_) volume_W = 1;
+	if(Q2_max_ == Q2_min_) volume_Q2 = 1;
+	if(cos_max == cos_min) volume_cos = 1;
+	if(phi_max == phi_min) volume_phi = 1;
 
-	if(W_max_ == W_min_ and Q2_max_ == Q2_min_) barier = int(100*(cos_max - cos_min)*(phi_max - phi_min)*180/M_PI);
-	if(W_max_ == W_min_ and phi_max == phi_min) barier = int(100*(Q2_max_ - Q2_min_)*100*(cos_max - cos_min));
-	if(Q2_max_ == Q2_min_ and phi_max == phi_min) barier = int(100*(W_max_ - W_min_)*100*(cos_max - cos_min));
-	if(W_max_ == W_min_ and cos_max == cos_min) barier = int(100*(Q2_max_ - Q2_min_)*(phi_max - phi_min)*180/M_PI);
-	if(Q2_max_ == Q2_min_ and cos_max == cos_min) barier = int(100*(W_max_ - W_min_)*(phi_max - phi_min)*180/M_PI);
-	if(phi_max == phi_min and cos_max == cos_min) barier = int(100*(W_max_ - W_min_)*100*(Q2_max_ - Q2_min_));
-
-	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and phi_max == phi_min) barier = int(100*(cos_max - cos_min));
-	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and cos_max == cos_min) barier = int((phi_max - phi_min)*180/M_PI);
-	if(W_max_ == W_min_ and phi_max == phi_min and cos_max == cos_min) barier = int(100*(Q2_max_ - Q2_min_));
-	if(Q2_max_ == Q2_min_ and phi_max == phi_min and cos_max == cos_min) barier = int(100*(W_max_ - W_min_));
-
-	if(W_max_ == W_min_ and Q2_max_ == Q2_min_ and phi_max == phi_min and cos_max == cos_min) barier = 1;
-
-	if(W_max_ != W_min_ and Q2_max_ != Q2_min_ and phi_max != phi_min and cos_max != cos_min) barier = int(1000000*(Q2_max_ - Q2_min_)*(W_max_ - W_min_)*(phi_max - phi_min)*(cos_max - cos_min)*180/M_PI);
+	barier = volume_W*volume_Q2*volume_cos*volume_phi;
 
 	if(barier == 0) barier++;
 
