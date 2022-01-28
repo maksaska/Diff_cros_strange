@@ -80,4 +80,5 @@ double error_handler(vector<double>& V, const double& average);
 
 vector<double> Str_func_all(const double& W, const double& Q2, const double& cos_th); // str. functions St dSt Sl dSl Slt dSlt Stt dStt [nb/sr] in the point (W, Q2, cos)
 vector<double> Point_diff(const double& W, const double& Q2, const double& cos, const double& phi); // cross section S0 dS0 [nb/sr] in the point (W, Q2, cos)
+vector<double> Average_CS_stat(); // Average cross section stat. method [nb/sr]
 vector<double> Average_CS(); // Average cross section [nb/sr]

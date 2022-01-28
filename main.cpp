@@ -30,11 +30,12 @@ int main(int argc, char* argv[])
 		Example: calc[0] - S0 -> dSigma/dOmega_{gamma_virt} value
 				 calc[1] - dS0 -> error for dSigma/dOmega_{gamma_virt} value
 
+		vector<double> calc = Average_CS_stat();  Average cross section stat. method [nb/sr]
+
 		Note: dSigma/dOmega_{gamma_virt} = St + eps*Sl + eps*Stt*cos(2*phi) + sqrt(eps*(eps + 1))*Slt*cos(phi)
 				 																		*/
-
-
-	vector<double> calc = Average_CS(); // Average cross section [nb/sr]
+																						
+	vector<double> calc = Average_CS(); //  final choice for average proceedure
 
 	cout << "Average cs:\n\tdSigma/dOmega = " << calc[0] << " +- " << calc[1] << " [nb/sr]\n" << endl;
 
