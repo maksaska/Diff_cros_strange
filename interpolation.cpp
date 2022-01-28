@@ -2096,7 +2096,7 @@ vector<double> Point_diff(const double& W, const double& Q2, const double& cos_t
 	return result;
 }
 
-double error_handler(vector<double>& V, const double& average)
+double error_handler(vector<double>& V, const double& average) //stat. error
 {
 	double result(0);
 

@@ -15,9 +15,9 @@ int main(int argc, char* argv[])
 		 ---> Q2_max_		virtuality (right border) [GeV2]
 		 ---> W_min_ 		invariant mass (left border) [GeV]
 		 ---> W_max_ 		invariant mass (right border) [GeV]
-		 ---> cos_min
+		 ---> cos_min      	theta in cm
 		 ---> cos_max
-		 ---> phi_min
+		 ---> phi_min		phi in cm [rad]
 		 ---> phi_max
 		 												*/
 
