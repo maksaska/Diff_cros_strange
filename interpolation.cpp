@@ -138,95 +138,6 @@ void input_check(int argc, char* argv[])
 	if(cos_min > 1) cos_min = 1;
 	if(cos_max < -1) cos_max = -1;
 	if(cos_max > 1) cos_max = 1;
-	if(phi_min < 0) phi_min = 0;
-	if(phi_min > 2*M_PI) phi_min = 2*M_PI;
-	if(phi_max < 0) phi_max = 0;
-	if(phi_max > 2*M_PI) phi_max = 2*M_PI;
-
-	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
-	if(h_L) cout << "Channel: KL" << endl;
-	else cout << "Channel: KS" << endl;
-	if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Point" << endl;
-		cout << "\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
-	}
 
 	vector<vector<double>> buff;
 
@@ -649,7 +560,7 @@ vector<double> giveData1(const double& W, const double& Q2, const double& cos_th
 		W_max = 1.725;
 	}
 
-	if(W > 1.975)
+	if(W > 1.975 or abs(W - 1.975) < 1e-8)
 	{
 		W_min = 1.975;
 		W_max = 2.05;
@@ -2107,7 +2018,8 @@ double error_handler(vector<double>& V, const double& average) //stat. error
 		result += pow(i - average, 2);
 	}
 
-	return sqrt(result/(V.size()*(V.size() - 1)));
+	//return sqrt(result/(V.size()*(V.size() - 1)));
+	return sqrt(result/(V.size() - 1));
 }
 
 vector<double> Average_CS_stat()
@@ -2118,7 +2030,7 @@ vector<double> Average_CS_stat()
 
 	vector<double> result;
 
-	int volume_W = int(100*(W_max_ - W_min_));
+	int volume_W = int(20*(W_max_ - W_min_));
 	int volume_Q2 = int(10*(Q2_max_ - Q2_min_));
 	int volume_cos = int(10*(cos_max - cos_min));
  	int volume_phi = int(0.1*(phi_max - phi_min)*180/M_PI);
@@ -2179,13 +2091,98 @@ vector<double> Average_CS_stat()
 
 vector<double> Average_CS()
 {
+	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
+	if(h_L) cout << "Channel: KL" << endl;
+	else cout << "Channel: KS" << endl;
+	if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Point" << endl;
+		cout << "\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " grad\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] grad\n" << endl;
+	}
+
 	auto start = std::chrono::high_resolution_clock::now();
 	auto finish = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = finish - start;
 
 	vector<double> result;
 
-	int volume_W = ceil(100*(W_max_ - W_min_));
+	int volume_W = ceil(20*(W_max_ - W_min_));
 	int volume_Q2 = ceil(10*(Q2_max_ - Q2_min_));
 	int volume_cos = ceil(10*(cos_max - cos_min));
  	int volume_phi = ceil(0.1*(phi_max - phi_min)*180/M_PI);
@@ -2206,13 +2203,13 @@ vector<double> Average_CS()
 	if(barier == 0) barier++;
 	int count(1);
 
-	for(int i = 1; i <= volume_W; i++)
+	for(int l = 1; l <= volume_phi; l++)
 	{
-		for(int j = 1; j <= volume_Q2; j++)
+		for(int k = 1; k <= volume_cos; k++)
 		{
-			for(int k = 1; k <= volume_cos; k++)
+			for(int j = 1; j <= volume_Q2; j++)
 			{
-				for(int l = 1; l <= volume_phi; l++)
+				for(int i = 1; i <= volume_W; i++)
 				{
 					W = W_min_ + (W_max_ - W_min_)*(2*i-1)/(2*volume_W);
 					Q2 = Q2_min_ + (Q2_max_ - Q2_min_)*(2*j-1)/(2*volume_Q2);
