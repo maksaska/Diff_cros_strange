@@ -1469,7 +1469,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[1]);
 	Block.push_back(line); line.clear();
 
-	result = cub_interp(Block, Q2); Block.clear();
+	//result = cub_interp(Block, Q2); Block.clear();
+	result = cub_interp_err(Block, Q2); Block.clear();
 
 	line.push_back(0);
 	line.push_back(0);
@@ -1487,7 +1488,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[3]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp(Block, Q2); Block.clear();
+	buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1507,7 +1509,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[5]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp(Block, Q2); Block.clear();
+	buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1551,7 +1554,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[7]);
 	Block.push_back(line); line.clear();
 
-	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp(Block, Q2); Block.clear();
+	buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -2018,8 +2022,8 @@ double error_handler(vector<double>& V, const double& average) //stat. error
 		result += pow(i - average, 2);
 	}
 
-	//return sqrt(result/(V.size()*(V.size() - 1)));
-	return sqrt(result/(V.size() - 1));
+	return sqrt(result/(V.size()*(V.size() - 1)));
+	//return sqrt(result/(V.size() - 1));
 }
 
 vector<double> Average_CS_stat()
