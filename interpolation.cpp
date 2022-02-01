@@ -1469,8 +1469,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[1]);
 	Block.push_back(line); line.clear();
 
-	//result = cub_interp(Block, Q2); Block.clear();
-	result = cub_interp_err(Block, Q2); Block.clear();
+	result = cub_interp(Block, Q2); Block.clear();
+	//result = cub_interp_err(Block, Q2); Block.clear();
 
 	line.push_back(0);
 	line.push_back(0);
@@ -1488,8 +1488,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[3]);
 	Block.push_back(line); line.clear();
 
-	//buff = cub_interp(Block, Q2); Block.clear();
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1509,8 +1509,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[5]);
 	Block.push_back(line); line.clear();
 
-	//buff = cub_interp(Block, Q2); Block.clear();
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -1554,8 +1554,8 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	line.push_back(buff2[7]);
 	Block.push_back(line); line.clear();
 
-	//buff = cub_interp(Block, Q2); Block.clear();
-	buff = cub_interp_err(Block, Q2); Block.clear();
+	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp_err(Block, Q2); Block.clear();
 	result.push_back(buff[0]);
 	result.push_back(buff[1]); buff.clear();
 
@@ -2065,7 +2065,8 @@ vector<double> Average_CS_stat()
 
 		holder.push_back(f[0]);
 		cs = (cs*(j-1) + f[0])/j;
-		d_cs = sqrt(d_cs*d_cs*(j-1)*(j-1) + f[1]*f[1])/j;
+		//d_cs = sqrt(d_cs*d_cs*(j-1)*(j-1) + f[1]*f[1])/j;
+		d_cs = (d_cs*(j-1) + f[1])/j;
 
 		j++; f.clear();
 
@@ -2077,10 +2078,11 @@ vector<double> Average_CS_stat()
 		cout << std::fixed << std::setprecision(1) << ceil(10*(elapsed.count() - 60*floor(elapsed.count()/60)))/10 << " s           \r" << flush;
 	}
 	cout << std::fixed << std::setprecision(2) << "                                                                                      ";
-	double error_stat = error_handler(holder, cs);
+	//double error_stat = error_handler(holder, cs);
 
 	result.push_back(cs);
-	result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
+	result.push_back(d_cs);
+	//result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
 
 	f.clear(); holder.clear();
 
@@ -2224,7 +2226,8 @@ vector<double> Average_CS()
 
 					holder.push_back(f[0]);
 					cs = (cs*(count-1) + f[0])/count;
-					d_cs = sqrt(d_cs*d_cs*(count-1)*(count-1) + f[1]*f[1])/count; f.clear();
+					//d_cs = sqrt(d_cs*d_cs*(count-1)*(count-1) + f[1]*f[1])/count; f.clear();
+					d_cs = (d_cs*(count-1) + f[1])/count; f.clear();
 
 					count++;
 
@@ -2240,10 +2243,11 @@ vector<double> Average_CS()
 	}
 
 	cout << std::fixed << std::setprecision(2) << "                                                                                      ";
-	double error_stat = error_handler(holder, cs);
+	//double error_stat = error_handler(holder, cs);
 
 	result.push_back(cs);
-	result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
+	result.push_back(d_cs);
+	//result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
 
 	f.clear(); holder.clear();
 
