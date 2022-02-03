@@ -387,14 +387,14 @@ ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3)
 	if(cos_th < V[0][0])
 	{
 		arg = V[0][0];
-		dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
+		//dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
 		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
 	}
 
 	if(cos_th > V[V.size()-1][0])
 	{
 		arg = V[V.size()-1][0];
-		dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
+		//dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
 		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
 	}
 
@@ -1997,7 +1997,11 @@ vector<double> Point_diff(const double& W, const double& Q2, const double& cos_t
 
 	f = S[0] + eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
 
-    if(S[0] < 0) f = eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
+	if(S[0] < 0) f = eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
+
+	if(S[2] < 0) f = S[0] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
+
+	if(S[0] < 0 and S[2] < 0) f = eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
 
 	if(f < 0) f = 0;
 
