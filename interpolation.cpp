@@ -432,7 +432,7 @@ bool isData1(const double& W, const double& Q2)
 {
 	if(h_L)
 	{
-		if(Q2 <= 1.0 and Q2 >= 0.65 and W <= 2.05 and W >= 1.65){ return true;}
+		if(Q2 <= 1.0 and Q2 >= 0.65 and W <= 1.975 and W >= 1.65){ return true;}
 		else{ return false;}
 	} else
 	{
@@ -471,7 +471,7 @@ bool isW1(const double& W)
 {
 	if(h_L)
 	{
-		if(W <= 2.05 and W >= 1.65){ return true;}
+		if(W <= 1.975 and W >= 1.65){ return true;}
 		else{ return false;}
 	} else
 	{
@@ -560,10 +560,10 @@ vector<double> giveData1(const double& W, const double& Q2, const double& cos_th
 		W_max = 1.725;
 	}
 
-	if(W > 1.975 or abs(W - 1.975) < 1e-8)
+	if(W > 1.925)
 	{
-		W_min = 1.975;
-		W_max = 2.05;
+		W_min = 1.925;
+		W_max = 1.975;
 	}
 
 	for(auto i:Data1)
@@ -1709,7 +1709,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 		Stt = buff[6];
 		dStt = buff[7]; buff.clear();
 
-		if(isData3(W, Q2))
+		/*if(isData3(W, Q2))
 		{
 			buff = giveData3(W, Q2, cos_th);
 
@@ -1721,7 +1721,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 			Slt = (Slt + buff[4])/2;
 			dStt = sqrt(dStt*dStt + buff[7]*buff[7] + pow(Stt - buff[6], 2))/2;
 			Stt = (Stt + buff[6])/2; buff.clear();
-		}
+		}*/
 
 		result.push_back(St);
 		result.push_back(dSt);
@@ -2015,6 +2015,28 @@ vector<double> Point_diff(const double& W, const double& Q2, const double& cos_t
 	return result;
 }
 
+vector<double> Point_diff_phi(const double& W, const double& Q2, const double& cos_th, const double& phi)
+{
+	double f, df;
+	vector<double> S, result;
+
+	if(isW3(W)) S = Str_func(W, Q2, cos_th);
+	else S = extrapolate_W(W, Q2, cos_th);
+
+	f = S[0] + eps(W, Q2)*S[2];
+
+	if(f < 0) f = 0;
+
+	df = sqrt(S[1]*S[1] + pow(eps(W, Q2)*S[3], 2));
+
+	S.clear();
+
+	result.push_back(f);
+	result.push_back(df);
+
+	return result;
+}
+
 double error_handler(vector<double>& V, const double& average) //stat. error
 {
 	double result(0);
@@ -2192,10 +2214,10 @@ vector<double> Average_CS()
 
 	vector<double> result;
 
-	int volume_W = ceil(20*(W_max_ - W_min_));
-	int volume_Q2 = ceil(10*(Q2_max_ - Q2_min_));
-	int volume_cos = ceil(10*(cos_max - cos_min));
- 	int volume_phi = ceil(0.1*(phi_max - phi_min)*180/M_PI);
+	int volume_W = floor(20*(W_max_ - W_min_));
+	int volume_Q2 = floor(10*(Q2_max_ - Q2_min_));
+	int volume_cos = floor(10*(cos_max - cos_min));
+ 	int volume_phi = floor(0.1*(phi_max - phi_min)*180/M_PI);
 
 	double W, Q2, cos_th, phi;
 	double cs(0), d_cs(0);
@@ -2224,14 +2246,14 @@ vector<double> Average_CS()
 					W = W_min_ + (W_max_ - W_min_)*(2*i-1)/(2*volume_W);
 					Q2 = Q2_min_ + (Q2_max_ - Q2_min_)*(2*j-1)/(2*volume_Q2);
 					cos_th = cos_min + (cos_max - cos_min)*(2*k-1)/(2*volume_cos);
-					phi = phi_min + (phi_max - phi_min)*(2*l-1)/(2*volume_W);
+					phi = phi_min + (phi_max - phi_min)*(2*l-1)/(2*volume_phi);
 
 					f = Point_diff(W, Q2, cos_th, phi);
 
 					holder.push_back(f[0]);
 					cs = (cs*(count-1) + f[0])/count;
 					//d_cs = sqrt(d_cs*d_cs*(count-1)*(count-1) + f[1]*f[1])/count; f.clear();
-					if(f[0] != 0) d_cs = (d_cs*(count-1) + f[1]/f[0])/count; f.clear();
+					if(abs(f[0] - 0) > 1e-0) d_cs = (d_cs*(count-1) + f[1]/f[0])/count; f.clear();
 
 					count++;
 
@@ -2245,6 +2267,162 @@ vector<double> Average_CS()
 			}
 		}
 	}
+
+	cout << std::fixed << std::setprecision(2) << "                                                                                      ";
+	//double error_stat = error_handler(holder, cs);
+
+	result.push_back(cs);
+	result.push_back(cs*d_cs);
+	//result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
+
+	f.clear(); holder.clear();
+
+	finish = std::chrono::high_resolution_clock::now();
+	elapsed = finish - start;
+	cout << "Elapsed time: " << floor(elapsed.count()/3600) << " h ";
+	cout << floor((elapsed.count() - 3600*floor(elapsed.count()/3600))/60) << " min ";
+	cout << elapsed.count() - 60*floor(elapsed.count()/60) << " s\n";
+
+	return result;
+}
+
+
+vector<double> Average_CS_phi()
+{
+	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
+	if(h_L) cout << "Channel: KL" << endl;
+	else cout << "Channel: KS" << endl;
+	if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Point" << endl;
+		cout << "\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+	}
+
+	auto start = std::chrono::high_resolution_clock::now();
+	auto finish = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed = finish - start;
+
+	vector<double> result;
+
+	int volume_W = ceil(20*(W_max_ - W_min_));
+	int volume_Q2 = ceil(10*(Q2_max_ - Q2_min_));
+	int volume_cos = ceil(10*(cos_max - cos_min));
+ 	int volume_phi = ceil(0.1*(phi_max - phi_min)*180/M_PI);
+
+	double W, Q2, cos_th, phi;
+	double cs(0), d_cs(0);
+	vector<double> f, holder;
+
+	unsigned long long int barier(1);
+
+	if(W_max_ == W_min_) volume_W = 1;
+	if(Q2_max_ == Q2_min_) volume_Q2 = 1;
+	if(cos_max == cos_min) volume_cos = 1;
+	volume_phi = 1;
+
+	barier = volume_W*volume_Q2*volume_cos*volume_phi;
+
+	if(barier == 0) barier++;
+	int count(1);
+
+	for(int k = 1; k <= volume_cos; k++)
+	{
+		for(int j = 1; j <= volume_Q2; j++)
+		{
+			for(int i = 1; i <= volume_W; i++)
+			{
+				W = W_min_ + (W_max_ - W_min_)*(2*i-1)/(2*volume_W);
+				Q2 = Q2_min_ + (Q2_max_ - Q2_min_)*(2*j-1)/(2*volume_Q2);
+				cos_th = cos_min + (cos_max - cos_min)*(2*k-1)/(2*volume_cos);
+				phi = 0;
+
+				f = Point_diff_phi(W, Q2, cos_th, phi);
+
+				holder.push_back(f[0]);
+				cs = (cs*(count-1) + f[0])/count;
+				//d_cs = sqrt(d_cs*d_cs*(count-1)*(count-1) + f[1]*f[1])/count; f.clear();
+				if(abs(f[0] - 0) > 1e-0) d_cs = (d_cs*(count-1) + f[1]/f[0])/count; f.clear();
+
+				count++;
+
+				finish = std::chrono::high_resolution_clock::now();
+				elapsed = (barier - count)*(finish - start)/count; //totalPhysMem
+
+				cout << std::fixed << std::setprecision(2) << "Progress: " << floor(10000*double(count)/double(barier))/100 << "%             Time remain: " << std::fixed << std::setprecision(0) <<   floor(elapsed.count()/3600) << " h ";
+				cout << floor((elapsed.count() - 3600*floor(elapsed.count()/3600))/60) << " min ";
+				cout << std::fixed << std::setprecision(1) << ceil(10*(elapsed.count() - 60*floor(elapsed.count()/60)))/10 << " s           \r" << flush;
+			}
+		}
+	}
+
 
 	cout << std::fixed << std::setprecision(2) << "                                                                                      ";
 	//double error_stat = error_handler(holder, cs);

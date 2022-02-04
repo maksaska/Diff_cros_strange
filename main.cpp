@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 
 		Note: dSigma/dOmega_{gamma_virt} = St + eps*Sl + eps*Stt*cos(2*phi) + sqrt(eps*(eps + 1))*Slt*cos(phi)
 				 																		*/
-																						
+
 	vector<double> calc = Average_CS(); //  final choice for average proceedure
 
 	cout << "Average cs:\n\tdSigma/dOmega = " << calc[0] << " +- " << calc[1] << " [nb/sr]\n" << endl;
