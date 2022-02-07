@@ -2252,13 +2252,14 @@ vector<double> Average_CS()
 
 					holder.push_back(f[0]);
 					cs = (cs*(count-1) + f[0])/count;
+					d_cs = (d_cs*(count-1) + f[1])/count;
 					//d_cs = sqrt(d_cs*d_cs*(count-1)*(count-1) + f[1]*f[1])/count; f.clear();
-					if(abs(f[0] - 0) > 1e-0) d_cs = (d_cs*(count-1) + f[1]/f[0])/count; f.clear();
+					//if(abs(f[0] - 0) > 1e-0) d_cs = (d_cs*(count-1) + f[1]/f[0])/count; f.clear();
 
 					count++;
 
 					finish = std::chrono::high_resolution_clock::now();
-					elapsed = (barier - count)*(finish - start)/count; //totalPhysMem
+					elapsed = (barier - count)*(finish - start)/count; 
 
 					cout << std::fixed << std::setprecision(2) << "Progress: " << floor(10000*double(count)/double(barier))/100 << "%             Time remain: " << std::fixed << std::setprecision(0) <<   floor(elapsed.count()/3600) << " h ";
 					cout << floor((elapsed.count() - 3600*floor(elapsed.count()/3600))/60) << " min ";
@@ -2272,7 +2273,7 @@ vector<double> Average_CS()
 	//double error_stat = error_handler(holder, cs);
 
 	result.push_back(cs);
-	result.push_back(cs*d_cs);
+	result.push_back(d_cs);
 	//result.push_back(sqrt(pow(d_cs, 2) + pow(error_stat, 2)));
 
 	f.clear(); holder.clear();
