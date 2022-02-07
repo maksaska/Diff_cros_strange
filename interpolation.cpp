@@ -2230,6 +2230,11 @@ vector<double> Average_CS()
 	if(cos_max == cos_min) volume_cos = 1;
 	if(phi_max == phi_min) volume_phi = 1;
 
+	if(volume_W == 0) volume_W++;
+	if(volume_Q2 == 0) volume_Q2++;
+	if(volume_cos == 0) volume_cos++;
+	if(volume_phi == 0) volume_phi++;
+
 	barier = volume_W*volume_Q2*volume_cos*volume_phi;
 
 	if(barier == 0) barier++;
@@ -2259,7 +2264,7 @@ vector<double> Average_CS()
 					count++;
 
 					finish = std::chrono::high_resolution_clock::now();
-					elapsed = (barier - count)*(finish - start)/count; 
+					elapsed = (barier - count)*(finish - start)/count;
 
 					cout << std::fixed << std::setprecision(2) << "Progress: " << floor(10000*double(count)/double(barier))/100 << "%             Time remain: " << std::fixed << std::setprecision(0) <<   floor(elapsed.count()/3600) << " h ";
 					cout << floor((elapsed.count() - 3600*floor(elapsed.count()/3600))/60) << " min ";
