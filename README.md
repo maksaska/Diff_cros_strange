@@ -32,9 +32,9 @@ To work with <a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" targ
 To use this option add --ratio to your ./start command
 
 * To choose the method for str. function errors extrapolation along cos_theta axis add --err_opt=X to your ./start command, where X is:
-  * X = 1 - constant prolongation of the boarding experimental data point error 
+  * X = 1 - constant prolongation of the boundary experimental data point error 
   * X = 2 - linear increase in error up to a 100% on the cos = +-1 point from the last known experimental data point
-  * X = 3 - quad. extrapolation of errors based on the experimental data
+  * X = 3 - quad. extrapolation of errors based on the experimental data (default)
 
 ## Average calculation
 For this mode of operation, the program requires the boundaries values of the <a href="https://www.codecogs.com/eqnedit.php?latex=W,\;Q^2,\;\cos{\theta},\;\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W,\;Q^2,\;\cos{\theta},\;\varphi" title="W,\;Q^2,\;\cos{\theta},\;\varphi" /></a> intervals. They are all zero by default.
