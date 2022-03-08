@@ -3,7 +3,8 @@
 using namespace std;
 
 double E0(6.535), Q2_min_(0), Q2_max_(0), W_min_(0), W_max_(0), cos_min(0), cos_max(0), phi_min(0), phi_max(0);
-bool h_L(true); double seed(time(0));
+bool h_L(true), ratio_str(false); double seed(time(0));
+int err_option(3);
 
 vector<vector<double>> Data1;
 vector<vector<double>> Data2;
@@ -12,7 +13,157 @@ vector<vector<double>> Data3;
 vector<vector<double>> Data_Diff;
 vector<vector<double>> Data_Sigma;
 
+vector<vector<double>> Data_Q2cos;
+vector<vector<double>> cosQ2_grid;
+
 double m_p(0.93827), m_K(0.498), m_S(1.1926), m_L(1.1157);
+
+struct Point
+{
+    double x;
+    double y;
+
+    void SetXY(const double& arg1, const double& arg2)
+    {
+        x = arg1;
+        y = arg2;
+    }
+
+    bool operator == (const Point& arg) const {
+        return (abs(x - arg.x) < 1e-9 && abs(y - arg.y) < 1e-9);
+    }
+
+    Point& operator=(const Point& arg){
+        x = arg.x;
+        y = arg.y;
+        return *this;
+    }
+
+	double sqrt_p()
+	{
+		return sqrt(x*x + y*y);
+	}
+};
+
+double cross_vec(const Point& P1, const Point& P2);
+
+double cross_vec(const Point& P1, const Point& P2)
+{
+	return P1.x*P2.x + P1.y*P2.y;
+}
+
+class Triangle{
+    private:
+        Point xy1, xy2, xy3;
+        double R, x0, y0;
+
+    public:
+
+        Triangle(const Point& P1, const Point& P2, const Point& P3) {
+			xy1.SetXY(P1.x, P1.y);
+            xy2.SetXY(P2.x, P2.y);
+			xy3.SetXY(P3.x, P3.y);
+        }
+
+        Triangle() {
+			xy1.SetXY(0, 0);
+  		  	xy2.SetXY(0, 0);
+  		  	xy3.SetXY(0, 0);
+        }
+
+        void Init(const Point& P1, const Point& P2, const Point& P3);
+        void Print_all();
+		void Print_c()
+		{
+			cout << xy1.x << "\t" << xy1.y << "\t" << xy2.x << "\t" << xy2.y << "\t" << xy3.x << "\t" << xy3.y << endl;
+		}
+
+		bool Inside(const Point& P) const {
+			return (P.x - x0)*(P.x - x0) + (P.y - y0)*(P.y - y0) < R*R - 1e-9;
+		}
+
+		bool Collinear()
+		{
+			Point a, b;
+
+		    a.SetXY(xy1.x - xy2.x, xy1.y - xy2.y);
+			b.SetXY(xy3.x - xy2.x, xy3.y - xy2.y);
+
+			return abs(a.sqrt_p()*b.sqrt_p() - abs(cross_vec(a, b))) < 1e-9;
+		}
+
+		Point Vertex_1() const {
+			return xy1;
+		}
+		Point Vertex_2() const {
+			return xy2;
+		}
+		Point Vertex_3() const {
+			return xy3;
+		}
+};
+
+void Triangle::Init(const Point& P1, const Point& P2, const Point& P3)
+{
+    xy1 = P1;
+    xy2 = P2;
+    xy3 = P3;
+
+    double a, b, c, p;
+
+    a = sqrt(pow(xy2.x - xy1.x, 2) + pow(xy2.y - xy1.y, 2));
+    b = sqrt(pow(xy3.x - xy1.x, 2) + pow(xy3.y - xy1.y, 2));
+    c = sqrt(pow(xy2.x - xy3.x, 2) + pow(xy2.y - xy3.y, 2));
+
+    p = (a + b + c)/2;
+
+    R = 0.25*a*b*c/sqrt(p*(p-a)*(p-b)*(p-c));
+
+    double x1, x2, x3, y1, y2, y3;
+
+	if(abs(xy1.x - xy2.x) > 1e-9)
+	{
+		x1 = xy1.x; y1 = xy1.y;
+	    x2 = xy2.x; y2 = xy2.y;
+	    x3 = xy3.x; y3 = xy3.y;
+	}else
+	{
+		x3 = xy1.x; y3 = xy1.y;
+		x2 = xy2.x; y2 = xy2.y;
+		x1 = xy3.x; y1 = xy3.y;
+	}
+
+    y0 = 0.5*((x2-x1)*(x1*x2 + y3*y3) + (x1-x3)*(x1*x3 + y2*y2) + (x3-x2)*(x2*x3 + y1*y1))/(x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2));
+    x0 = 0.5*(x1*x1 - x2*x2 + y1*y1 - y2*y2 - 2*y0*(y1-y2))/(x1 - x2);
+}
+
+void Triangle::Print_all()
+{
+    cout << "\n\tPoints: (" << xy1.x << "; " << xy1.y << ")\t(" << xy2.x << "; " << xy2.y << ")\t(" << xy3.x << "; " << xy3.y << ")" << endl;
+    cout << "\tCenter: (" << x0 << "; " << y0 << ")" << endl;
+    cout << "\tRadius: R = " << R << "\n" << endl;
+}
+
+bool Inside_tr(const Triangle& dot, const Point& P);
+
+bool Inside_tr(const Triangle& dot, const Point& P)
+{
+	Point P1, P2, P3;
+
+	P1 = dot.Vertex_1();
+	P2 = dot.Vertex_2();
+	P3 = dot.Vertex_3();
+
+	Point a, b, c;
+
+	a.SetXY(P3.x - P.x, P3.y - P.y);
+	b.SetXY(P2.x - P.x, P2.y - P.y);
+	c.SetXY(P1.x - P.x, P1.y - P.y);
+
+	return abs(acos(cross_vec(a, b)/(a.sqrt_p()*b.sqrt_p())) + acos(cross_vec(a, c)/(a.sqrt_p()*c.sqrt_p())) + acos(cross_vec(c, b)/(c.sqrt_p()*b.sqrt_p())) - 2*M_PI) < 1e-9;
+}
+
+vector<Triangle> cosQ2_trig;
 
 void Reading(string Path, vector<vector<double>>& V)
 {
@@ -56,11 +207,12 @@ void Reading(string Path, vector<vector<double>>& V)
 
 void input_check(int argc, char* argv[])
 {
-	const char* short_options = "e:hz:x:c:v:b:n:u:i:o:p:m:l:r:"; int rez; int option_index;
+	const char* short_options = "e:hz:x:c:v:b:n:u:i:o:p:m:l:r:g"; int rez; int option_index;
 
 	const struct option long_options[] = {
 						{"beam_energy", required_argument, NULL, 'e'},
 	        				{"KSigma0", no_argument, NULL, 'h'},
+							{"ratio", no_argument, NULL, 'g'},
 	        				{"Q2_min", required_argument, NULL, 'z'},
 	        				{"Q2_max", required_argument, NULL, 'x'},
 	        				{"W_min", required_argument, NULL, 'c'},
@@ -70,6 +222,7 @@ void input_check(int argc, char* argv[])
 	        				{"phi_min", required_argument, NULL, 'm'},
 	        				{"phi_max", required_argument, NULL, 'l'},
 							{"SEED", required_argument, NULL, 'r'},
+                            {"err_opt", required_argument, NULL, 'o'},
 	        				{NULL, 0, NULL, 0}
 								};
 	while ((rez=getopt_long(argc, argv, short_options, long_options, &option_index)) != -1)
@@ -82,6 +235,10 @@ void input_check(int argc, char* argv[])
 			};
 			case 'h': {
 				h_L = false;
+				break;
+			};
+			case 'g': {
+				ratio_str = true;
 				break;
 			};
 			case 'z': {
@@ -120,6 +277,10 @@ void input_check(int argc, char* argv[])
 				seed = atof(optarg);
 				break;
 			};
+            case 'o': {
+				err_option = int(atof(optarg));
+				break;
+			};
 			case '?': default: {
 				cerr << "Unkhown option" << endl;
 				break;
@@ -129,20 +290,20 @@ void input_check(int argc, char* argv[])
 
 	double srand(seed);
 
-    if(W_min_ < 1.5) W_min_ = 1.61;
 	if(Q2_min_ < 0) Q2_min_ = 0;
+    if(Q2_max_ > 5.0) Q2_min_ = 5.0;
 	if(Q2_max_ < Q2_min_) Q2_max_ = Q2_min_ + 0.05;
-	if(W_max_ < W_min_) W_max_ = W_min_ + 0.01;
-	if(cos_max < cos_min) cos_max = cos_min + 0.01;
 	if(cos_min < -1) cos_min = -1;
 	if(cos_min > 1) cos_min = 1;
 	if(cos_max < -1) cos_max = -1;
 	if(cos_max > 1) cos_max = 1;
+    if(cos_max < cos_min) cos_max = cos_min + 0.01;
 
 	vector<vector<double>> buff;
 
 	if(h_L)
 	{
+        if(W_min_ < 1.61) W_min_ = 1.61;
 		Reading("./Data/P1.dat", buff);
 		Transfer(buff, Data1); buff.clear();
 		Reading("./Data/P2.dat", buff);
@@ -151,9 +312,12 @@ void input_check(int argc, char* argv[])
 		Transfer(buff, Data3); buff.clear();
 		Reading("./Data/Diff_L_Photo.dat", Data_Diff);
 		Reading("./Data/Sigma_L_Photo.dat", Data_Sigma);
+		Reading("./Data/KL.dat", Data_Q2cos);
+		Reading("./Data/KL_triang.dat", cosQ2_grid);
 	}
 	else
 	{
+        if(W_min_ < 1.68632) W_min_ = 1.68632;
 		Reading("./Data/P4.dat", buff);
 		Transfer(buff, Data1); buff.clear();
 		Reading("./Data/P5.dat", buff);
@@ -162,9 +326,122 @@ void input_check(int argc, char* argv[])
 		Transfer(buff, Data3); buff.clear();
 		Reading("./Data/Diff_S_Photo.dat", Data_Diff);
 		Reading("./Data/Sigma_S_Photo.dat", Data_Sigma);
+		Reading("./Data/KS.dat", Data_Q2cos);
+		Reading("./Data/KS_triang.dat", cosQ2_grid);
+	}
+
+    if(W_max_ > 2.65) W_min_ = 2.65;
+    if(W_max_ < W_min_) W_max_ = W_min_ + 0.01;
+
+	Triangle dot;
+	Point A, B, C;
+
+	for(auto i:cosQ2_grid)
+	{
+		A.SetXY(i[0], i[1]);
+		B.SetXY(i[2], i[3]);
+		C.SetXY(i[4], i[5]);
+
+		dot.Init(A, B, C);
+
+		cosQ2_trig.push_back(dot);
 	}
 
 	buff.clear();
+}
+
+void Greet_message()
+{
+	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
+	if(h_L) cout << "Channel: KL" << endl;
+	else cout << "Channel: KS" << endl;
+    cout << endl;
+	if(ratio_str) cout << "Sigma_LT and Sigma_TT from ratio in weak area (W, Q2)" << endl;
+    if(err_option == 1) cout << "Const errors for cos_th extrapolation" << endl;
+    if(err_option == 2) cout << "Linear increasing(up to 100%) errors for cos_th extrapolation" << endl;
+    if(err_option == 3) cout << "Quad. extrapolation of errors for cos_th extrapolation" << endl;
+    cout << endl;
+	if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Point" << endl;
+		cout << "\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
+		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
+		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
+	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
+	{
+		cout << "\nDiff. cross section calculation option: Average" << endl;
+		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
+		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
+	}
 }
 
 double fRand(const double& fMin, const double& fMax)
@@ -358,7 +635,8 @@ vector<double> approx_cos_leg(vector<vector<double>>& V, const double& cos_th, c
 	gr = new TGraphErrors(V.size(), X, Y, NULL, dY);
 
 	TF1 *ff;
-ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3) - 3*x) + [4]*(35*pow(x, 4) - 30*pow(x, 2) + 3)/8", -1, 1);
+if(statement) ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3) - 3*x) + [4]*(35*pow(x, 4) - 30*pow(x, 2) + 3)/8", -1, 1);
+else ff = new TF1("ff", "(1 - x*x)*([0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3) - 3*x) + [4]*(35*pow(x, 4) - 30*pow(x, 2) + 3)/8)", -1, 1);
 	gr->Fit(ff, "Q");
 
 	double A = ff->GetParameter(0);
@@ -377,26 +655,30 @@ ff = new TF1("ff", "[0] + [1]*x + [2]*0.5*(3*pow(x,2) - 1) + [3]*0.5*(5*pow(x,3)
 	ff->Clear(); delete ff;
 	gr->Clear(); delete gr;
 
-	func =  A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
+    buff = interp_cub(V, cos_th, statement);
 
-	if(func < 0 and statement){func = 0;}
-	buff = interp_cub(V, cos_th, statement);
-
-	dfunc = buff[1];
+    dfunc = buff[1];
 
 	if(cos_th < V[0][0])
 	{
-		arg = V[0][0];
+        if(err_option == 1) dfunc = V[0][2];
+        if(err_option == 2) dfunc = V[0][2]*((-arg + V[0][0])/(1 + V[0][0]) + 1);
+        arg = V[0][0];
 		//dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
-		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
 	}
 
 	if(cos_th > V[V.size()-1][0])
 	{
-		arg = V[V.size()-1][0];
+        if(err_option == 1) dfunc = V[V.size()-1][2];
+        if(err_option == 2) dfunc = V[V.size()-1][2]*((arg - V[V.size()-1][0])/(1 - V[V.size()-1][0]) + 1);
+        arg = V[V.size()-1][0];
 		//dfunc = sqrt(pow((func-buff[0])/2, 2) + dfunc*dfunc);
-		func = A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
 	}
+
+	if(statement) func =  A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8;
+    else func = (1 - arg*arg)*(A + B*arg + C*0.5*(3*pow(arg,2) - 1) + D*0.5*(5*pow(arg,3) - 3*arg) + E*(35*pow(arg, 4) - 30*pow(arg, 2) + 3)/8);
+
+	if(func < 0 and statement){func = 0;}
 
 	/*if(cos_th < V[0][0])
 	{
@@ -504,6 +786,39 @@ bool isW3(const double& W)
 		if(W <= 2.575 and W >= 1.695){ return true;}
 		else{ return false;}
 	}
+}
+
+bool isWforQ2inter(const double& W, const double& Q2)
+{
+    if(Q2 < 1.8)
+    {
+        if(h_L)
+    	{
+    		if(W <= 2.575 and W >= 1.65){ return true;}
+    		else{ return false;}
+    	} else
+    	{
+            if(Q2 > 1.0)
+            {
+                if(W <= 2.575 and W >= 1.75){ return true;}
+        		else{ return false;}
+            }else
+            {
+                if(W <= 2.575 and W >= 1.725){ return true;}
+        		else{ return false;}
+            }
+    	}
+    }else{
+        if(h_L)
+    	{
+    		if(W <= 2.575 and W >= 1.63){ return true;}
+    		else{ return false;}
+    	} else
+    	{
+    		if(W <= 2.575 and W >= 1.695){ return true;}
+    		else{ return false;}
+    	}
+    }
 }
 
 bool isSigma(const double& W)
@@ -1564,6 +1879,409 @@ vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos
 	return result;
 }
 
+vector<double> plane_inter(vector<vector<double>>& V, const double& x, const double& y)
+{
+		vector<double> result;
+
+		double x1, x2, x3, y1, y2, y3, f1, f2, f3, df1, df2, df3;
+		double A, B, C, dA, dB, dC;
+		double delta;
+
+		x1 = V[0][0]; y1 = V[0][1]; f1 = V[0][2]; df1 = V[0][3];
+		x2 = V[1][0]; y2 = V[1][1]; f2 = V[1][2]; df2 = V[1][3];
+		x3 = V[2][0]; y3 = V[2][1]; f3 = V[2][2]; df3 = V[2][3];
+
+		delta = x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2);
+
+		A = ((y2 - y3)*f1 + (y3 - y1)*f2 + (y1 - y2)*f3)/delta;
+		B = ((x3 - x2)*f1 + (x1 - x3)*f2 + (x2 - x1)*f3)/delta;
+		C = ((x2*y3 - x3*y2)*f1 + (x3*y1 - x1*y3)*f2 + (x1*y2 - x2*y1)*f3)/delta;
+
+		/*dA = sqrt(pow((y2 - y3)*df1, 2) + pow((y3 - y1)*df2, 2)+ pow((y1 - y2)*df3, 2))/delta;
+		dB = sqrt(pow((x3 - x2)*df1, 2) + pow((x1 - x3)*df2, 2) + pow((x2 - x1)*df3, 2))/delta;
+		dC = sqrt(pow((x2*y3 - x3*y2)*df1, 2) + pow((x3*y1 - x1*y3)*df2, 2) + pow((x1*y2 - x2*y1)*df3, 2))/delta;*/
+
+		dA = ((y2 - y3)*df1 + (y3 - y1)*df2 + (y1 - y2)*df3)/delta;
+		dB = ((x3 - x2)*df1 + (x1 - x3)*df2 + (x2 - x1)*df3)/delta;
+		dC = ((x2*y3 - x3*y2)*df1 + (x3*y1 - x1*y3)*df2 + (x1*y2 - x2*y1)*df3)/delta;
+
+		result.push_back(A*x + B*y + C);
+		result.push_back(abs(dA*x + dB*y + dC));
+		//result.push_back(sqrt(pow(dA*x, 2) + pow(dB*y, 2) + pow(dC, 2)));
+
+		return result;
+}
+
+bool triangular(vector<vector<double>>& V, const double& x, const double& y)
+{
+	double x1, x2, x3, y1, y2, y3;
+	double a, b, c;
+
+	x1 = V[0][0]; y1 = V[0][1];
+	x2 = V[1][0]; y2 = V[1][1];
+	x3 = V[2][0]; y3 = V[2][1];
+
+	a = acos(((x1 - x)*(x2 - x) + (y1 - y)*(y2 - y))/(sqrt((x1 - x)*(x1 - x) + (y1 - y)*(y1 - y))*sqrt((x2 - x)*(x2 - x) + (y2 - y)*(y2 - y))));
+	b = acos(((x1 - x)*(x3 - x) + (y1 - y)*(y3 - y))/(sqrt((x1 - x)*(x1 - x) + (y1 - y)*(y1 - y))*sqrt((x3 - x)*(x3 - x) + (y3 - y)*(y3 - y))));
+	c = acos(((x3 - x)*(x2 - x) + (y3 - y)*(y2 - y))/(sqrt((x3 - x)*(x3 - x) + (y3 - y)*(y3 - y))*sqrt((x2 - x)*(x2 - x) + (y2 - y)*(y2 - y))));
+
+	if(abs(a + b + c - 2*M_PI) < 1e-9) return true;
+
+	return false;
+}
+
+bool check_line(vector<vector<double>>& V)
+{
+	double x1, x2, x3, y1, y2, y3;
+
+	x1 = V[0][0]; y1 = V[0][1];
+	x2 = V[1][0]; y2 = V[1][1];
+	x3 = V[2][0]; y3 = V[2][1];
+
+	if(abs(x1 - x2) < 1e-9 and abs(x3 - x2) < 1e-9) return false;
+	if(abs(y1 - y2) < 1e-9 and abs(y3 - y2) < 1e-9) return false;
+
+	return true;
+}
+
+vector<vector<double>> trig_points(const double& cos_th, const double& Q2)
+{
+	vector<vector<double>> result, V;
+	vector<double> buff; bool done(true);
+
+	buff = Data_Q2cos[0]; V.push_back(buff); buff.clear();
+
+	std::vector<vector<double>>::iterator it = V.begin();
+
+	for(int i = 1; i < Data_Q2cos.size(); i++)
+	{
+		done = true;
+
+		for(int j = 0; j < V.size(); j++)
+		{
+			if(pow(Data_Q2cos[i][0] - cos_th, 2) + pow(Data_Q2cos[i][1] - Q2, 2) < pow(V[j][0] - cos_th, 2) + pow(V[j][1] - Q2, 2))
+			{
+				it = V.begin();
+				V.insert(it + j, Data_Q2cos[i]);
+				done = false;
+				break;
+			}
+		}
+
+		if(done)
+		{
+			V.push_back(Data_Q2cos[i]);
+		}
+	}
+
+	for(int i = 0; i < V.size(); i++)
+	{
+		result.push_back(V[i]);
+		for(int j = i+1; j < V.size(); j++)
+		{
+			result.push_back(V[j]);
+			for(int k = j+1; k < V.size(); k++)
+			{
+				result.push_back(V[k]);
+				if(triangular(result, cos_th, Q2) and check_line(result))
+				{
+					buff.clear(); V.clear();
+					return result;
+				}
+				else result.pop_back();
+			}
+			result.pop_back();
+		}
+		result.pop_back();
+	}
+
+	for(int i = 0; i < V.size(); i++)
+	{
+		result.push_back(V[i]);
+		for(int j = i+1; j < V.size(); j++)
+		{
+			result.push_back(V[j]);
+			for(int k = j+1; k < V.size(); k++)
+			{
+				result.push_back(V[k]);
+				if(check_line(result))
+				{
+					buff.clear(); V.clear();
+					return result;
+				}
+				else result.pop_back();
+			}
+			result.pop_back();
+		}
+		result.pop_back();
+	}
+
+	buff.push_back(0);
+	buff.push_back(0);
+	buff.push_back(0);
+	buff.push_back(0);
+
+	result.push_back(buff);
+	result.push_back(buff);
+	result.push_back(buff);
+	result.push_back(buff);
+
+	buff.clear(); V.clear();
+
+	return result;
+}
+
+vector<double> trig_points_plane(const double& cos_th, const double& Q2)
+{
+	vector<vector<double>> Block, result;
+	vector<double> buff, result_final; double arg_th(cos_th);
+
+	for(auto i:Data_Q2cos)
+	{
+		if(abs(cos_th - i[0]) < 1e-9 and abs(Q2 - i[1]) < 1e-9)
+		{
+			result_final.push_back(i[2]);
+			result_final.push_back(i[4]);
+
+			return result_final;
+		}
+	}
+
+	//result = trig_points(cos_th, Q2);
+	Point P, P1, P2, P3;
+	P.SetXY(cos_th, Q2);
+
+	for(int i = 0; i < cosQ2_trig.size(); i++)
+	{
+		if(Inside_tr(cosQ2_trig[i], P))
+		{
+			P1 = cosQ2_trig[i].Vertex_1();
+			P2 = cosQ2_trig[i].Vertex_2();
+			P3 = cosQ2_trig[i].Vertex_3();
+
+			for(auto j:Data_Q2cos)
+			{
+				if(abs(P1.x - j[0]) < 1e-9 and abs(P1.y - j[1]) < 1e-9)
+				{
+					buff.push_back(j[0]);
+					buff.push_back(j[1]);
+					buff.push_back(j[2]);
+					buff.push_back(j[4]);
+					result.push_back(buff); buff.clear();
+				}
+				if(abs(P2.x - j[0]) < 1e-9 and abs(P2.y - j[1]) < 1e-9)
+				{
+					buff.push_back(j[0]);
+					buff.push_back(j[1]);
+					buff.push_back(j[2]);
+					buff.push_back(j[4]);
+					result.push_back(buff); buff.clear();
+				}
+				if(abs(P3.x - j[0]) < 1e-9 and abs(P3.y - j[1]) < 1e-9)
+				{
+					buff.push_back(j[0]);
+					buff.push_back(j[1]);
+					buff.push_back(j[2]);
+					buff.push_back(j[4]);
+					result.push_back(buff); buff.clear();
+				}
+			}
+			break;
+		}
+	}
+
+	if(result.size() == 0)
+	{
+		while(result.size() == 0)
+		{
+			arg_th -= 0.01*cos_th/abs(cos_th);
+			P.SetXY(arg_th, Q2);
+
+			for(int i = 0; i < cosQ2_trig.size(); i++)
+			{
+				if(Inside_tr(cosQ2_trig[i], P))
+				{
+					P1 = cosQ2_trig[i].Vertex_1();
+					P2 = cosQ2_trig[i].Vertex_2();
+					P3 = cosQ2_trig[i].Vertex_3();
+
+					for(auto j:Data_Q2cos)
+					{
+						if(abs(P1.x - j[0]) < 1e-9 and abs(P1.y - j[1]) < 1e-9)
+						{
+							buff.push_back(j[0]);
+							buff.push_back(j[1]);
+							buff.push_back(j[2]);
+							buff.push_back(j[4]);
+							result.push_back(buff); buff.clear();
+						}
+						if(abs(P2.x - j[0]) < 1e-9 and abs(P2.y - j[1]) < 1e-9)
+						{
+							buff.push_back(j[0]);
+							buff.push_back(j[1]);
+							buff.push_back(j[2]);
+							buff.push_back(j[4]);
+							result.push_back(buff); buff.clear();
+						}
+						if(abs(P3.x - j[0]) < 1e-9 and abs(P3.y - j[1]) < 1e-9)
+						{
+							buff.push_back(j[0]);
+							buff.push_back(j[1]);
+							buff.push_back(j[2]);
+							buff.push_back(j[4]);
+							result.push_back(buff); buff.clear();
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	for(int i = 0; i < result.size(); i++)
+	{
+		buff.push_back(result[i][0]);
+		buff.push_back(result[i][1]);
+		buff.push_back(result[i][2]);
+		buff.push_back(result[i][0]);
+		Block.push_back(buff); buff.clear();
+	}
+
+	result_final.push_back(plane_inter(Block, arg_th, Q2)[0]); Block.clear();
+
+	for(int i = 0; i < result.size(); i++)
+	{
+		buff.push_back(result[i][0]);
+		buff.push_back(result[i][1]);
+		buff.push_back(result[i][3]);
+		buff.push_back(result[i][0]);
+		Block.push_back(buff); buff.clear();
+	}
+
+	result_final.push_back(plane_inter(Block, arg_th, Q2)[0]); Block.clear();
+
+	Block.clear(); result.clear(); buff.clear();
+
+	return result_final;
+}
+
+vector<double> lower_Q2_int_with_ratio(const double& W, const double& Q2, const double& cos_th)
+{
+	vector<double> result;
+	vector<double> buff1, buff2, buff, line;
+	vector<vector<double>> Block;
+	double Q2_1, Q2_2;
+
+	buff = Photo_diff(W, cos_th);
+	line.push_back(0);
+	line.push_back(buff[0]);
+	line.push_back(buff[1]);
+	Block.push_back(line); line.clear(); buff.clear();
+
+	if(isW1(W) and Q2 < 1.0)
+	{
+		Q2_1 = 0.65; Q2_2 = 1.0;
+		buff1 = giveData1(W, Q2_1, cos_th);
+		buff2 = giveData1(W, Q2_2, cos_th);
+	}else{
+		if(isW2(W))
+		{
+			Q2_1 = 1.0; Q2_2 = 1.55;
+			buff1 = giveData2(W, Q2_1, cos_th);
+			buff2 = giveData2(W, Q2_2, cos_th);
+		}else{
+			if(isW3(W))
+			{
+				Q2_1 = 1.8; Q2_2 = 2.6;
+				buff1 = giveData3(W, Q2_1, cos_th);
+				buff2 = giveData3(W, Q2_2, cos_th);
+			}else
+			{
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+				result.push_back(0);
+
+				return result;
+			}
+		}
+	}
+
+	line.push_back(Q2_1);
+	line.push_back(buff1[0]);
+	line.push_back(buff1[1]);
+	Block.push_back(line); line.clear();
+
+
+	line.push_back(Q2_2);
+	line.push_back(buff2[0]);
+	line.push_back(buff2[1]);
+	Block.push_back(line); line.clear();
+
+	result = cub_interp(Block, Q2); Block.clear();
+	//result = cub_interp_err(Block, Q2); Block.clear();
+
+	line.push_back(0);
+	line.push_back(0);
+	line.push_back(0);
+	Block.push_back(line); line.clear();
+
+	line.push_back(Q2_1);
+	line.push_back(buff1[2]);
+	line.push_back(buff1[3]);
+	Block.push_back(line); line.clear();
+
+
+	line.push_back(Q2_2);
+	line.push_back(buff2[2]);
+	line.push_back(buff2[3]);
+	Block.push_back(line); line.clear();
+
+	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp_err(Block, Q2); Block.clear();
+	result.push_back(buff[0]);
+	result.push_back(buff[1]); buff.clear();
+
+    line.push_back(0);
+	line.push_back(0);
+	line.push_back(0);
+	Block.push_back(line); line.clear();
+
+	line.push_back(Q2_1);
+	line.push_back(buff1[4]);
+	line.push_back(buff1[5]);
+	Block.push_back(line); line.clear();
+
+
+	line.push_back(Q2_2);
+	line.push_back(buff2[4]);
+	line.push_back(buff2[5]);
+	Block.push_back(line); line.clear();
+
+	buff = cub_interp(Block, Q2); Block.clear();
+	//buff = cub_interp_err(Block, Q2); Block.clear();
+	result.push_back(buff[0]);
+	result.push_back(buff[1]); buff.clear();
+
+	vector<double> trig_grid = trig_points_plane(cos_th, Q2);
+
+	double St = result[0];
+	double dSt = result[1];
+
+	//result.push_back(trig_grid[0]*St);
+	//result.push_back(abs(trig_grid[0]*dSt));
+	result.push_back(trig_grid[1]*St);
+	result.push_back(abs(trig_grid[1]*dSt));
+
+	buff1.clear(); buff2.clear(); trig_grid.clear();
+
+	return result;
+}
+
 vector<double> extrapolate_higher(vector<vector<double>>& V, const double& Q2)
 {
 	vector<double> result;
@@ -1709,7 +2427,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 		Stt = buff[6];
 		dStt = buff[7]; buff.clear();
 
-		/*if(isData3(W, Q2))
+		if(isData3(W, Q2))
 		{
 			buff = giveData3(W, Q2, cos_th);
 
@@ -1721,7 +2439,7 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 			Slt = (Slt + buff[4])/2;
 			dStt = sqrt(dStt*dStt + buff[7]*buff[7] + pow(Stt - buff[6], 2))/2;
 			Stt = (Stt + buff[6])/2; buff.clear();
-		}*/
+		}
 
 		result.push_back(St);
 		result.push_back(dSt);
@@ -1762,7 +2480,8 @@ vector<double> Str_func(const double& W, const double& Q2, const double& cos_th)
 
 	if(Q2 < 3.45 and isW3(W))
 	{
-		buff = lower_Q2_int(W, Q2, cos_th);
+		if((h_L and ratio_str and W > 2.18) or (!h_L and ratio_str and W > 2.17)) buff = lower_Q2_int_with_ratio(W, Q2, cos_th);
+		else buff = lower_Q2_int(W, Q2, cos_th);
 
 		St = buff[0];
 		dSt = buff[1];
@@ -1902,41 +2621,45 @@ vector<double> extrapolate_W(const double& W, const double& Q2, const double& co
 		{
 			if(Q2 < 1.0)
 			{
-				W1 = 1.65; W2 = 1.725; W3 = 1.775; W4 = 1.825;
+				W1 = 1.61; W2 = 1.65; W3 = 1.725; W4 = 1.775;
 			}
 			else if(Q2 >= 1.0 and Q2 < 1.8)
 			{
-				W1 = 1.65; W2 = 1.75; W3 = 1.85; W4 = 1.95;
+				W1 = 1.61; W2 = 1.65; W3 = 1.75; W4 = 1.85;
 			}
 			else if(Q2 >= 1.8)
 			{
-				W1 = 1.63; W2 = 1.675; W3 = 1.725; W4 = 1.775;
+				W1 = 1.61; W2 = 1.63; W3 = 1.675; W4 = 1.725;
 			}
 		}
 		else
 		{
 			if(Q2 < 1.0)
 			{
-				W1 = 1.725; W2 = 1.775; W3 = 1.825; W4 = 1.875;
+				W1 = 1.68632; W2 = 1.725; W3 = 1.775; W4 = 1.825;
 			}
 			else if(Q2 >= 1.0 and Q2 < 1.8)
 			{
-				W1 = 1.75; W2 = 1.85; W3 = 1.95; W4 = 2.05;
+				W1 = 1.68632; W2 = 1.75; W3 = 1.85; W4 = 1.95;
 			}
 			else if(Q2 >= 1.8)
 			{
-				W1 = 1.695; W2 = 1.725; W3 = 1.775; W4 = 1.825;
+				W1 = 1.68632; W2 = 1.695; W3 = 1.725; W4 = 1.775;
 			}
 
 		}
+        for(int i = 0; i < 8; i++)
+        {
+            buff1.push_back(0);
+        }
 	}
 	else
 	{
 		//W1 = 2.425; W2 = 2.475; W3 = 2.525; W4 = 2.575;
 		W1 = 2.025; W2 = 2.275; W3 = 2.425; W4 = 2.575;
+        buff1 = Str_func(W1, Q2, cos_th);
 	}
 
-	buff1 = Str_func(W1, Q2, cos_th);
 	buff2 = Str_func(W2, Q2, cos_th);
 	buff3 = Str_func(W3, Q2, cos_th);
 	buff4 = Str_func(W4, Q2, cos_th);
@@ -1968,7 +2691,7 @@ vector<double> extrapolate_W(const double& W, const double& Q2, const double& co
 		result.push_back(buff[0]);
 		result.push_back(buff[1]);
 
-		Block.clear();
+		Block.clear(); buff.clear();
 	}
 
 	buff1.clear(); buff2.clear(); buff3.clear(); buff4.clear(); Block.clear();
@@ -1977,12 +2700,135 @@ vector<double> extrapolate_W(const double& W, const double& Q2, const double& co
 	return result;
 }
 
+vector<double> extrapolate_W_with_ratio(const double& W, const double& Q2, const double& cos_th)
+{
+	vector<double> result;
+
+	vector<double> buff1, buff2, buff3, buff4, buff, trig_grid;
+	vector<vector<double>> Block;
+
+	double W1, W2, W3, W4;
+
+	trig_grid = trig_points_plane(cos_th, Q2);
+
+    if(W < 2.0)
+	{
+		if(h_L)
+		{
+			if(Q2 < 1.0)
+			{
+				W1 = 1.61; W2 = 1.65; W3 = 1.725; W4 = 1.775;
+			}
+			else if(Q2 >= 1.0 and Q2 < 1.8)
+			{
+				W1 = 1.61; W2 = 1.65; W3 = 1.75; W4 = 1.85;
+			}
+			else if(Q2 >= 1.8)
+			{
+				W1 = 1.61; W2 = 1.63; W3 = 1.675; W4 = 1.725;
+			}
+		}
+		else
+		{
+			if(Q2 < 1.0)
+			{
+				W1 = 1.68632; W2 = 1.725; W3 = 1.775; W4 = 1.825;
+			}
+			else if(Q2 >= 1.0 and Q2 < 1.8)
+			{
+				W1 = 1.68632; W2 = 1.75; W3 = 1.85; W4 = 1.95;
+			}
+			else if(Q2 >= 1.8)
+			{
+				W1 = 1.68632; W2 = 1.695; W3 = 1.725; W4 = 1.775;
+			}
+
+		}
+        for(int i = 0; i < 8; i++)
+        {
+            buff1.push_back(0);
+        }
+	}
+	else
+	{
+		//W1 = 2.425; W2 = 2.475; W3 = 2.525; W4 = 2.575;
+		W1 = 2.025; W2 = 2.275; W3 = 2.425; W4 = 2.575;
+        buff1 = Str_func(W1, Q2, cos_th);
+	}
+
+	buff2 = Str_func(W2, Q2, cos_th);
+	buff3 = Str_func(W3, Q2, cos_th);
+	buff4 = Str_func(W4, Q2, cos_th);
+
+	for(int i = 0; i < 6; i += 2)
+	{
+		buff.push_back(W1);
+		buff.push_back(buff1[i]);
+		buff.push_back(buff1[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W2);
+		buff.push_back(buff2[i]);
+		buff.push_back(buff2[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W3);
+		buff.push_back(buff3[i]);
+		buff.push_back(buff3[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff.push_back(W4);
+		buff.push_back(buff4[i]);
+		buff.push_back(buff4[i+1]);
+		Block.push_back(buff); buff.clear();
+
+		buff = Cubic_fit(Block, W);
+
+		result.push_back(buff[0]);
+		result.push_back(buff[1]);
+
+		Block.clear(); buff.clear();
+	}
+
+	double St = result[0];
+	double dSt = result[1];
+
+	//result.push_back(trig_grid[0]*St);
+	//result.push_back(abs(trig_grid[0]*dSt));
+	result.push_back(trig_grid[1]*St);
+	result.push_back(abs(trig_grid[1]*dSt));
+
+	buff1.clear(); buff2.clear(); buff3.clear(); buff4.clear(); Block.clear();
+	buff.clear(); trig_grid.clear();
+
+	return result;
+}
+
 vector<double> Str_func_all(const double& W, const double& Q2, const double& cos_th)
 {
 	vector<double> result;
 
-	if(isW3(W)) result = Str_func(W, Q2, cos_th);
-	else result = extrapolate_W(W, Q2, cos_th);
+	if(isWforQ2inter(W, Q2)) result = Str_func(W, Q2, cos_th);
+	else
+	{
+		if(ratio_str and W > 2.0) result = extrapolate_W_with_ratio(W, Q2, cos_th);
+		else result = extrapolate_W(W, Q2, cos_th);
+	}
+
+    if((h_L and W <= 1.61) or (!h_L and W <= 1.68632))
+    {
+        result.clear();
+        result.push_back(0); result.push_back(0);
+        result.push_back(0); result.push_back(0);
+        result.push_back(0); result.push_back(0);
+        result.push_back(0); result.push_back(0);
+
+        return result;
+    }
+
+    if(result[0] < 0) result[0] = 0;
+
+    if(result[2] < 0) result[2] = 0;
 
 	return result;
 }
@@ -1992,8 +2838,7 @@ vector<double> Point_diff(const double& W, const double& Q2, const double& cos_t
 	double f, df;
 	vector<double> S, result;
 
-	if(isW3(W)) S = Str_func(W, Q2, cos_th);
-	else S = extrapolate_W(W, Q2, cos_th);
+	S = Str_func_all(W, Q2, cos_th);
 
 	f = S[0] + eps(W, Q2)*S[2] + eps(W, Q2)*S[6]*std::cos(2*phi) + sqrt(eps(W, Q2)*(eps(W, Q2) + 1))*S[4]*std::cos(phi);
 
@@ -2020,8 +2865,7 @@ vector<double> Point_diff_phi(const double& W, const double& Q2, const double& c
 	double f, df;
 	vector<double> S, result;
 
-	if(isW3(W)) S = Str_func(W, Q2, cos_th);
-	else S = extrapolate_W(W, Q2, cos_th);
+	S = Str_func_all(W, Q2, cos_th);
 
 	f = S[0] + eps(W, Q2)*S[2];
 
@@ -2054,6 +2898,8 @@ double error_handler(vector<double>& V, const double& average) //stat. error
 
 vector<double> Average_CS_stat()
 {
+	Greet_message();
+
 	auto start = std::chrono::high_resolution_clock::now();
 	auto finish = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = finish - start;
@@ -2075,6 +2921,11 @@ vector<double> Average_CS_stat()
 	if(Q2_max_ == Q2_min_) volume_Q2 = 1;
 	if(cos_max == cos_min) volume_cos = 1;
 	if(phi_max == phi_min) volume_phi = 1;
+
+	if(volume_W == 0) volume_W++;
+	if(volume_Q2 == 0) volume_Q2++;
+	if(volume_cos == 0) volume_cos++;
+	if(volume_phi == 0) volume_phi++;
 
 	barier = volume_W*volume_Q2*volume_cos*volume_phi;
 
@@ -2123,90 +2974,7 @@ vector<double> Average_CS_stat()
 
 vector<double> Average_CS()
 {
-	cout << "\nBeam energy E = " << E0 << " GeV" << endl;
-	if(h_L) cout << "Channel: KL" << endl;
-	else cout << "Channel: KS" << endl;
-	if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Point" << endl;
-		cout << "\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if((Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 = " << Q2_max_ << " GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && (W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW = " << W_max_ << " GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && (cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos = ";
-		cout << cos_max << "\n\tphi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && (phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n";
-		cout << "\tphi = " << phi_max*180/M_PI << " degree\n" << endl;
-	} else if(!(Q2_max_ == Q2_min_) && !(W_max_ == W_min_) && !(cos_min == cos_max) && !(phi_min == phi_max))
-	{
-		cout << "\nDiff. cross section calculation option: Average" << endl;
-		cout << "Chosen area:\n\tW in [" << W_min_ << ", " << W_max_ << "] GeV\n\tQ2 in [" << Q2_min_ << ", " << Q2_max_ << "] GeV2\n\tcos in [" << cos_min << ", " << cos_max << "]\n\t";
-		cout << "phi in [" << phi_min*180/M_PI << ", " << phi_max*180/M_PI << "] degree\n" << endl;
-	}
+	Greet_message();
 
 	auto start = std::chrono::high_resolution_clock::now();
 	auto finish = std::chrono::high_resolution_clock::now();
@@ -2393,6 +3161,11 @@ vector<double> Average_CS_phi()
 	if(Q2_max_ == Q2_min_) volume_Q2 = 1;
 	if(cos_max == cos_min) volume_cos = 1;
 	volume_phi = 1;
+
+	if(volume_W == 0) volume_W++;
+	if(volume_Q2 == 0) volume_Q2++;
+	if(volume_cos == 0) volume_cos++;
+	if(volume_phi == 0) volume_phi++;
 
 	barier = volume_W*volume_Q2*volume_cos*volume_phi;
 

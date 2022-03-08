@@ -29,7 +29,8 @@
 using namespace std;
 
 extern double E0, Q2_min_, Q2_max_, W_min_, W_max_, cos_min, cos_max, phi_min, phi_max;
-extern bool h_L;
+extern bool h_L, ratio_str;
+extern int err_option;
 
 extern double m_p, m_K, m_S, m_L;
 
@@ -40,10 +41,14 @@ extern vector<vector<double>> Data3;
 extern vector<vector<double>> Data_Diff;
 extern vector<vector<double>> Data_Sigma;
 
+extern vector<vector<double>> Data_Q2cos;
+extern vector<vector<double>> cosQ2_grid;
+
 /*   ---   Interpolation.cpp   ---   */
 
 void Reading(string Path, vector<vector<double>>& V);            /*   Reads data file   */
 void input_check(int argc, char* argv[]);                        /*  input parameters handler   */
+void Greet_message();
 void Transfer(vector<vector<double>>& from_, vector<vector<double>>& to_); /*   Transfer data to appropriate format   */
 void Print_data(vector<vector<double>>& V);                         /*   Prints vector<vector<double>>   */
 double fRand(const double& fMin, const double& fMax);               /*  Gives random double from the interval   */
@@ -65,6 +70,7 @@ vector<double> giveData3(const double& W, const double& Q2, const double& cos);
 bool isW1(const double& W);
 bool isW2(const double& W);
 bool isW3(const double& W);
+bool isWforQ2inter(const double& W, const double& Q2);
 bool isSigma(const double& W);
 vector<double> Photo_diff_fixed(const double& W, const double& cos_th);
 vector<double> Photo_Sigma_fixed(const double& W, const double& cos_th);
@@ -72,8 +78,15 @@ vector<double> Photo_diff(const double& W, const double& cos_th);
 vector<double> Photo_Sigma(const double& W, const double& cos_th);
 vector<double> Photo_Sigma_TT(const double& W, const double& cos_th);
 vector<double> lower_Q2_int(const double& W, const double& Q2, const double& cos_th);
+vector<double> plane_inter(vector<vector<double>>& V, const double& x, const double& y);
+bool triangular(vector<vector<double>>& V, const double& x, const double& y);
+bool check_line(vector<vector<double>>& V);
+vector<vector<double>> trig_points(const double& cos_th, const double& Q2);
+vector<double> trig_points_plane(const double& cos_th, const double& Q2);
+vector<double> lower_Q2_int_with_ratio(const double& W, const double& Q2, const double& cos_th);
 vector<double> higher_Q2_int(const double& W, const double& Q2, const double& cos_th);
 vector<double> extrapolate_W(const double& W, const double& Q2, const double& cos_th);
+vector<double> extrapolate_W_with_ratio(const double& W, const double& Q2, const double& cos_th);
 double error_handler(vector<double>& V, const double& average);
 vector<double> Point_diff_phi(const double& W, const double& Q2, const double& cos_th, const double& phi);
 
