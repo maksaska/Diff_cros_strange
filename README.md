@@ -1,6 +1,6 @@
 # DiffCS_strange
 
-This 4.0.0 version of the newest differential cross section calculator for exclusive single kaon electroproduction allows you to evaluate the differential cross section value for the large invariants' scales and any <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a> values. Relatively fast and effective procedures make this program a convenient and reliable choice for data analysis in particle physics.
+This 3.4.2 version of the newest differential cross section calculator for exclusive single kaon electroproduction allows you to evaluate the differential cross section value for the large invariants' scales and any <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a> values. Relatively fast and effective procedures make this program a convenient and reliable choice for data analysis in particle physics.
 
 ### Formalism 
 The differential cross section of the kaons electroproduction off proton in the one-photon approximation:
@@ -27,14 +27,6 @@ To work with <a href="https://www.codecogs.com/eqnedit.php?latex=K\Sigma^0" targ
 * 2 modes of operation are initialized in the program:
   * Cross section calculation at the given point <a href="https://www.codecogs.com/eqnedit.php?latex=(W,&space;Q^2,&space;\cos{\theta},&space;\varphi)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?(W,&space;Q^2,&space;\cos{\theta},&space;\varphi)" title="(W, Q^2, \cos{\theta}, \varphi)" /></a>
   * Average cross section calculation for a given area of <a href="https://www.codecogs.com/eqnedit.php?latex=W" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W" title="W" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=Q^2" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Q^2" title="Q^2" /></a>, <a href="https://www.codecogs.com/eqnedit.php?latex=\cos{\theta}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\cos{\theta}" title="\cos{\theta}" /></a>, and <a href="https://www.codecogs.com/eqnedit.php?latex=\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\varphi" title="\varphi" /></a>. 
-
-* Different algorithm for Sigma_TT evaluation in W in [2.17, 2.65] GeV and Q^2 in [0, 1.8] GeV^2 weak area of phase space. The values of Sigma_TT based on averaged over W > 2 GeV Sigma_TT/Sigma_T ratios from CLAS and quadratically interpolated Sigma_T values (between electro- and photoproduction data).
-To use this option add --ratio to your ./start command
-
-* To choose the method for str. function errors extrapolation along cos_theta axis add --err_opt=X to your ./start command, where X is:
-  * X = 1 - constant prolongation of the boundary experimental data point error 
-  * X = 2 - linear increase in error up to a 100% on the cos = +-1 point from the last known experimental data point
-  * X = 3 - quad. extrapolation of errors based on the experimental data (default)
 
 ## Average calculation
 For this mode of operation, the program requires the boundaries values of the <a href="https://www.codecogs.com/eqnedit.php?latex=W,\;Q^2,\;\cos{\theta},\;\varphi" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W,\;Q^2,\;\cos{\theta},\;\varphi" title="W,\;Q^2,\;\cos{\theta},\;\varphi" /></a> intervals. They are all zero by default.

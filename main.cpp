@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
 	Data1.clear(); Data2.clear(); Data3.clear();
 	Data_Diff.clear(); Data_Sigma.clear(); Data_Q2cos.clear();
-	cosQ2_grid.clear();
+	cosQ2_grid.clear(); W_syserr.clear(); calc.clear();
 
 	return 0;
 }

@@ -29,7 +29,7 @@
 using namespace std;
 
 extern double E0, Q2_min_, Q2_max_, W_min_, W_max_, cos_min, cos_max, phi_min, phi_max;
-extern bool h_L, ratio_str;
+extern bool h_L, ratio_str, add_factor, W_sys;
 extern int err_option;
 
 extern double m_p, m_K, m_S, m_L;
@@ -44,6 +44,8 @@ extern vector<vector<double>> Data_Sigma;
 extern vector<vector<double>> Data_Q2cos;
 extern vector<vector<double>> cosQ2_grid;
 
+extern vector<vector<double>> W_syserr;
+
 /*   ---   Interpolation.cpp   ---   */
 
 void Reading(string Path, vector<vector<double>>& V);            /*   Reads data file   */
@@ -55,7 +57,9 @@ double fRand(const double& fMin, const double& fMax);               /*  Gives ra
 vector<double> cub_interp(vector<vector<double>>& V, const double x);
 vector<double> cub_interp_err(vector<vector<double>>& V, const double x);
 vector<double> interp_cub(vector<vector<double>>& V, const double& cos, const bool& statement);
-vector<double> approx_cos_leg(vector<vector<double>>& V, const double& cos, const bool& statement);
+vector<double> interp_cub_TT_LT(vector<vector<double>>& V, const double& cos_th);
+vector<double> approx_cos_leg(vector<vector<double>>& V, const double& cos_th, const bool& statement, const bool& S_LT_check);
+vector<double> approx_cos_leg_Sigma(vector<vector<double>>& V, const double& cos_th);
 vector<double> extrapolate_higher(vector<vector<double>>& V, const double& cos_th, const bool& statement);
 vector<double> Cubic_fit(vector<vector<double>>& V, const double& arg);
 double eps(const double& W, const double& Q2);
@@ -85,6 +89,8 @@ vector<vector<double>> trig_points(const double& cos_th, const double& Q2);
 vector<double> trig_points_plane(const double& cos_th, const double& Q2);
 vector<double> lower_Q2_int_with_ratio(const double& W, const double& Q2, const double& cos_th);
 vector<double> higher_Q2_int(const double& W, const double& Q2, const double& cos_th);
+double get_sys_W_err_cos(const double& W, const double& cos_th);
+double get_sys_W_err(const double& W, const double& cos_th);
 vector<double> extrapolate_W(const double& W, const double& Q2, const double& cos_th);
 vector<double> extrapolate_W_with_ratio(const double& W, const double& Q2, const double& cos_th);
 double error_handler(vector<double>& V, const double& average);
