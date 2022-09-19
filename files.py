@@ -45,7 +45,6 @@ class Files:
         self.__Data_Diff = pd.read_csv(f'./Data/{dir}/Diff_Photo.csv')
         self.__Data_Q2cos = pd.read_csv(f'./Data/{dir}/K.csv')
         self.__W_syserr = pd.read_csv(f'./Data/{dir}/K_W_syserr.csv')
-        self.__cosQ2_trig = pd.read_csv(f'./Data/{dir}/K_triang.csv')
 
     @property
     def name(self):

@@ -1,647 +1,437 @@
 from model import Model
-import os.path
-from math import *
+from bin import Bin
+import plotly.express as px
 import numpy as np
-import matplotlib.pyplot as plt
-
-#
-#
-# PLOTTING FUNCTIONS
-#
-#
-
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+
+
+def Show_average_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_th_axis=False, phi_axis=False):
+    if W_axis and Q2_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, W_axis=True, Q2_axis=True)
+
+        title = "cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter_3d(average_list, x='W_avg', y='Q2_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='Q2 [GeV2]',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif W_axis and cos_th_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, W_axis=True, cos_th_axis=True)
+
+        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter_3d(average_list, x='W_avg', y='cos_th_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='cos_th',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif W_axis and phi_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, W_axis=True, phi_axis=True)
+
+        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + \
+            " GeV2 ; cos_th = " + str(phase_space['cos_th']) + \
+            " +- " + str(phase_space['delta_cos_th'])
+        fig = px.scatter_3d(average_list, x='W_avg', y='phi_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='phi [degree]',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif Q2_axis and cos_th_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, Q2_axis=True, cos_th_axis=True)
+
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter_3d(average_list, x='Q2_avg', y='cos_th_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='Q2 [GeV2]', yaxis_title='cos_th',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif Q2_axis and phi_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, Q2_axis=True, phi_axis=True)
+
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; cos_th = " + str(
+            phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th'])
+        fig = px.scatter_3d(average_list, x='Q2_avg', y='phi_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='Q2 [GeV2]', yaxis_title='phi [degree]',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif cos_th_axis and phi_axis:
+        average_list = Model.Average_diff_dependency(
+            phase_space, options, cos_th_axis=True, phi_axis=True)
+
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(
+            phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2"
+        fig = px.scatter_3d(average_list, x='cos_th_avg', y='phi_avg',
+                            z='cs_avg', color='dcs_avg', title=title)
+        fig.update_layout(scene=dict(xaxis_title='cos_th', yaxis_title='phi [degree]',
+                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+            title="Absolute error [nb]"))
+
+    elif W_axis:
+        average_list = Model.Average_diff_dependency(phase_space, options, W_axis=True)
+        average_list['dW'] = phase_space['delta_W']/2
+
+        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter(average_list, x='W_avg', y='cs_avg', error_x='dW', error_y='dcs_avg', labels=dict(
+            W_avg='W [GeV]', cs_avg='Diff. cross section [nb]'), title=title)
+
+    elif Q2_axis:
+        average_list = Model.Average_diff_dependency(phase_space, options, Q2_axis=True)
+        average_list['dQ2'] = phase_space['delta_Q2']/2
+
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter(average_list, x='Q2_avg', y='cs_avg',
+                         error_x='dQ2', error_y='dcs_avg', labels=dict(Q2_avg='Q2 [GeV2]', cs_avg='Diff. cross section [nb]'), title=title)
+
+    elif cos_th_axis:
+        average_list = Model.Average_diff_dependency(phase_space, options, cos_th_axis=True)
+        average_list['dcos_th'] = phase_space['delta_cos_th']/2
+
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; phi = " + str(
+            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        fig = px.scatter(average_list, x='cos_th_avg', y='cs_avg',
+                         error_x='dcos_th', error_y='dcs_avg', labels=dict(cos_th_avg='cos_th', cs_avg='Diff. cross section [nb]'), title=title)
 
-def plot_cs_W(obj: Model, Q2: float, cos_th: float, E_beam: float, phi: float):
-    obj.Q2 = Q2
-    obj.cos_th = cos_th
-    obj.E_beam = E_beam
-    obj.phi = phi
+    elif phi_axis:
+        average_list = Model.Average_diff_dependency(phase_space, options, phi_axis=True)
+        average_list['dphi'] = phase_space['delta_phi']/2
 
-    if obj.name == "K+L":
-        Wmin = 1.61
-    else:
-        Wmin = 1.69
+        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; cos_th = " + str(
+            phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th'])
+        fig = px.scatter(average_list, x='phi_avg', y='cs_avg',
+                         error_x='dphi', error_y='dcs_avg', labels=dict(phi_avg='phi [degree]', cs_avg='Diff. cross section [nb]'), title=title)
 
-    x = np.arange(Wmin, 2.65, 0.01)
-    y = []
-    dy = []
-
-    for W in x:
-        obj.W = W
-        res = obj.Point_diff()
-        y.append(res[0])
-        dy.append(res[1])
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
+    # fig.show()
+    return fig
 
-    plt.style.use('bmh')
 
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'$Q^{2}$ = {Q2} GeV$^{2}$\n $\cos$'+r'$\theta$ = ' + f'{cos_th}\nE = {E_beam} GeV\n $\phi$ = {phi} degree')
+def Show_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_th_axis=False, phi_axis=False):
+    if W_axis:
+        W = np.arange(1.61, 2.65, 0.01)
+        cs_model = Model(options, W, phase_space['Q2'], phase_space['cos_th'], phase_space['phi'])
 
-    plt.xlabel('W, GeV')
-    plt.ylabel('$d\sigma/d\Omega$, [nb/sr]')
-    plt.title('W - dependence')
-    plt.legend(prop={'size': 20})
-    plt.plot([Wmin, 2.65], [0, 0], color='black')
+        cs_list = cs_model.Point_diff().sort_values(by=['W']).reset_index(drop=True)
 
-    # plt.show()
+        fig = make_subplots(rows=1, cols=1)
 
-    plt.savefig(
-        f"./pictures/cs_W_{obj.name}_{Q2}_{cos_th}_{E_beam}_{phi}.pdf", bbox_inches='tight')
-    plt.clf()
+        W = cs_list['W']
+        cs = cs_list['cs']
+        dcs = cs_list['dcs']
 
+        fig.add_trace(go.Scatter(x=W, y=cs, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=cs+dcs, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=W, y=cs-dcs, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
 
-def plot_cs_Q2(obj: Model, W: float, cos_th: float, E_beam: float, phi: float):
-    obj.W = W
-    obj.cos_th = cos_th
-    obj.E_beam = E_beam
-    obj.phi = phi
+        fig.update_xaxes(title_text=r'$\text{W [GeV]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\gamma^{*}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
 
-    x = np.arange(0.0, 5.0, 0.05)
-    y = []
-    dy = []
+        title = r'$\text{Diff. cross section } Q^{2} = %.2f \text{ GeV}^{2}; \cos{\theta} = %.2f; \phi = %.1f \text{ degree}$' % (
+            phase_space['Q2'][0], phase_space['cos_th'][0], phase_space['phi'][0])
 
-    for Q2 in x:
-        obj.Q2 = Q2
-        res = obj.Point_diff()
-        y.append(res[0])
-        dy.append(res[1])
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
 
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
+    elif Q2_axis:
+        Q2 = np.arange(0, 5.0, 0.05)
+        cs_model = Model(options, phase_space['W'], Q2, phase_space['cos_th'], phase_space['phi'])
 
-    plt.style.use('bmh')
+        cs_list = cs_model.Point_diff().sort_values(by=['Q2']).reset_index(drop=True)
 
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'W = {W} GeV\n $\cos$'+r'$\theta$ = ' + f'{cos_th}\nE = {E_beam} GeV\n $\phi$ = {phi} degree')
+        fig = make_subplots(rows=1, cols=1)
 
-    plt.xlabel('$Q^{2}$, GeV$^{2}$')
-    plt.ylabel('$d\sigma/d\Omega$, [nb/sr]')
-    plt.title('$Q^{2}$ - dependence')
-    plt.legend(prop={'size': 20})
-    plt.plot([0, 5.0], [0, 0], color='black')
+        Q2 = cs_list['Q2']
+        cs = cs_list['cs']
+        dcs = cs_list['dcs']
 
-    # plt.show()
+        fig.add_trace(go.Scatter(x=Q2, y=cs, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=cs+dcs, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=Q2, y=cs-dcs, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
 
-    plt.savefig(
-        f"./pictures/cs_Q2_{obj.name}_{W}_{cos_th}_{E_beam}_{phi}.pdf", bbox_inches='tight')
-    plt.clf()
-
-
-def plot_cs_cos(obj: Model, W: float, Q2: float, E_beam: float, phi: float):
-    obj.W = W
-    obj.Q2 = Q2
-    obj.E_beam = E_beam
-    obj.phi = phi
-
-    x = np.arange(-1, 1, 0.01)
-    y = []
-    dy = []
-
-    for cos_th in x:
-        obj.cos_th = cos_th
-        res = obj.Point_diff()
-        y.append(res[0])
-        dy.append(res[1])
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
-
-    plt.style.use('bmh')
-
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'W = {W} GeV\n$Q^{2}$ = {Q2} GeV$^{2}$ \nE = {E_beam} GeV\n $\phi$ = {phi} degree')
-
-    plt.xlabel(r'$\cos \theta$')
-    plt.ylabel('$d\sigma/d\Omega$, [nb/sr]')
-    plt.title(r'$\cos \theta$ - dependence')
-    plt.legend(prop={'size': 20})
-    plt.plot([-1, 1], [0, 0], color='black')
-
-    # plt.show()
-
-    plt.savefig(
-        f"./pictures/cs_cos_{obj.name}_{W}_{Q2}_{E_beam}_{phi}.pdf", bbox_inches='tight')
-    plt.clf()
-
-
-def plot_cs_phi(obj: Model, W: float, Q2: float, cos_th: float, E_beam: float):
-    obj.W = W
-    obj.Q2 = Q2
-    obj.E_beam = E_beam
-    obj.cos_th = cos_th
-
-    x = obj.phi
-    y = []
-    dy = []
-
-    res = obj.Point_diff()
-
-    for i in res:
-        y.append(i["f"])
-        dy.append(i["df"])
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
-
-    plt.style.use('bmh')
-
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'W = {W} GeV\n$Q^{2}$ = {Q2} GeV$^{2}$ \nE = {E_beam} GeV\n $\cos$' + r'$\theta$ = ' + f'{cos_th}')
-
-    plt.xlabel('$\phi$, degree')
-    plt.ylabel('$d\sigma/d\Omega$, [nb/sr]')
-    plt.title('$\phi$ - dependence')
-    plt.legend(prop={'size': 20})
-    plt.plot([-180, 180], [0, 0], color='black')
-
-    # plt.show()
-
-    plt.savefig(
-        f"./pictures/cs_phi_{obj.name}_{W}_{Q2}_{E_beam}_{cos_th}.pdf", bbox_inches='tight')
-    plt.clf()
-
-
-def plot_str_W(name: str, obj: Model, Q2: float, cos_th: float, E_beam: float):
-
-    a = 0
-    b = 0
-    c = 0
-    d = 0
-    e = 0
-
-    if name == "St":
-        a = 1
-    if name == "Sl":
-        b = 1
-    if name == "Slt":
-        c = 1
-        j = 6
-    if name == "Stt":
-        d = 1
-        j = 8
-    if name == "Su":
-        e = 1
-        j = 4
-
-    obj.Q2 = Q2
-    obj.cos_th = cos_th
-    obj.E_beam = E_beam
-
-    if obj.name == "K+L":
-        Wmin = 1.61
-    else:
-        Wmin = 1.69
-
-    x = np.arange(Wmin, 2.65, 0.01)
-    y = []
-    dy = []
-
-    for W in x:
-        obj.W = W
-        res = obj.Str_func_all()
-        y.append(a*res[0] + b*res[2] + c*res[4] + d*res[6] + e*(res[0] + obj.eps(W, Q2)*res[2]))
-        dy.append(a*res[1] + b*res[3] + c*res[5] + d*res[7] + e *
-                  sqrt(res[1]**2 + obj.eps(W, Q2)**2*res[3]**2))
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
-
-    plt.style.use('bmh')
-
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'$Q^{2}$ = {Q2} GeV$^{2}$\n $\cos$'+r'$\theta$ = ' + f'{cos_th}\nE = {E_beam} GeV')
-
-    data_presence = True
-
-    file1 = []
-    file2 = []
-    file3 = []
-    file = []
-
-    if obj.name == "K+L":
-        plt.plot(x, y, label=f"$K^+\Lambda$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data_dat/P1.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data_dat/P2.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data_dat/P3.dat', unpack=True)
-        if Q2 == 0 and a == 1:
-            del file
-            file = np.loadtxt('./Data_dat/Diff_L_Photo.dat', unpack=True)
-    if obj.name == "K+S0":
-        plt.plot(x, y, label=f"$K^+\Sigma^0$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data/P4.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data/P5.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data/P6.dat', unpack=True)
-        if Q2 == 0 and a == 1:
-            del file
-            file = np.loadtxt('./Data/Diff_S_Photo.dat', unpack=True)
-
-    x_data = []
-    y_data = []
-    dy_data = []
-
-    if a == 1 or b == 1 or len(file1) + len(file2) + len(file3) == 0:
-        data_presence = False
-
-    if data_presence:
-        if len(file1) > 0:
-            for i in range(0, len(file1[1])):
-                if file1[1][i] == Q2 and file1[3][i] == cos_th:
-                    x_data.append(file1[0][i])
-                    y_data.append(file1[j][i])
-                    dy_data.append(file1[j+1][i])
-        if len(file2) > 0:
-            for i in range(0, len(file2[1])):
-                if file2[1][i] == Q2 and file2[3][i] == cos_th:
-                    x_data.append(file2[0][i])
-                    y_data.append(file2[j][i])
-                    dy_data.append(file2[j+1][i])
-        if len(file3) > 0:
-            for i in range(0, len(file3[1])):
-                if file3[1][i] == Q2 and file3[3][i] == cos_th:
-                    x_data.append(file3[0][i])
-                    y_data.append(file3[j][i])
-                    dy_data.append(file3[j+1][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS data")
-
-    if a == 1 and Q2 == 0:
-        for i in range(0, len(file[1])):
-            if abs(file[1][i] - cos_th) < 1e-9:
-                x_data.append(file[0][i])
-                y_data.append(file[2][i])
-                dy_data.append(file[3][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS Photo data")
-
-    plt.xlabel('W, GeV')
-    if name == "St":
-        plt.ylabel('$S_{t}$, [nb/sr]')
-        plt.title('$S_{t}$, [nb/sr]')
-    if name == "Sl":
-        plt.ylabel('$S_{l}$, [nb/sr]')
-        plt.title('$S_{l}$, [nb/sr]')
-    if name == "Slt":
-        plt.ylabel('$S_{lt}$, [nb/sr]')
-        plt.title('$S_{lt}$, [nb/sr]')
-    if name == "Stt":
-        plt.ylabel('$S_{tt}$, [nb/sr]')
-        plt.title('$S_{tt}$, [nb/sr]')
-    if name == "Su":
-        plt.ylabel('$S_{u}$, [nb/sr]')
-        plt.title('$S_{u}$, [nb/sr]')
-
-    plt.legend(prop={'size': 20})
-
-    # plt.show()
-
-    if name == "St":
-        plt.savefig(
-            f"./pictures/St_W_{obj.name}_{Q2}_{cos_th}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Sl":
-        plt.savefig(
-            f"./pictures/Sl_W_{obj.name}_{Q2}_{cos_th}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Slt":
-        plt.savefig(
-            f"./pictures/Slt_W_{obj.name}_{Q2}_{cos_th}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Stt":
-        plt.savefig(
-            f"./pictures/Stt_W_{obj.name}_{Q2}_{cos_th}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Su":
-        plt.savefig(
-            f"./pictures/Su_W_{obj.name}_{Q2}_{cos_th}_{E_beam}.pdf", bbox_inches='tight')
-
-    plt.clf()
-
-
-def plot_str_cos(name: str, obj: Model, W: float, Q2: float, E_beam: float):
-
-    a = 0
-    b = 0
-    c = 0
-    d = 0
-    e = 0
-
-    if name == "St":
-        a = 1
-    if name == "Sl":
-        b = 1
-    if name == "Slt":
-        c = 1
-        j = 6
-    if name == "Stt":
-        d = 1
-        j = 8
-    if name == "Su":
-        e = 1
-        j = 4
-
-    obj.Q2 = Q2
-    obj.W = W
-    obj.E_beam = E_beam
-
-    x = np.arange(-1, 1, 0.01)
-    y = []
-    dy = []
-
-    for cos_th in x:
-        obj.cos_th = cos_th
-        res = obj.Str_func_all()
-        y.append(a*res[0] + b*res[2] + c*res[4] + d*res[6] + e*(res[0] + obj.eps(W, Q2)*res[2]))
-        dy.append(a*res[1] + b*res[3] + c*res[5] + d*res[7] + e *
-                  sqrt(res[1]**2 + obj.eps(W, Q2)**2*res[3]**2))
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
-
-    plt.style.use('bmh')
-
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'$Q^{2}$ = {Q2} GeV$^{2}$\n W = {W} GeV\nE = {E_beam} GeV')
-
-    data_presence = True
-
-    file1 = []
-    file2 = []
-    file3 = []
-    file = []
-
-    if obj.name == "K+L":
-        plt.plot(x, y, label=f"$K^+\Lambda$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data_dat/P1.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data_dat/P2.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data_dat/P3.dat', unpack=True)
-        if Q2 == 0 and a == 1:
-            del file
-            file = np.loadtxt('./Data_dat/Diff_L_Photo.dat', unpack=True)
-    if obj.name == "K+S0":
-        plt.plot(x, y, label=f"$K^+\Sigma^0$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data/P4.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data/P5.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data/P6.dat', unpack=True)
-        if Q2 == 0 and a == 1:
-            del file
-            file = np.loadtxt('./Data/Diff_S_Photo.dat', unpack=True)
-
-    x_data = []
-    y_data = []
-    dy_data = []
-
-    if a == 1 or b == 1 or len(file1) + len(file2) + len(file3) == 0:
-        data_presence = False
-
-    if data_presence:
-        if len(file1) > 0:
-            for i in range(0, len(file1[1])):
-                if file1[1][i] == Q2 and file1[3][i] == cos_th:
-                    x_data.append(file1[0][i])
-                    y_data.append(file1[j][i])
-                    dy_data.append(file1[j+1][i])
-        if len(file2) > 0:
-            for i in range(0, len(file2[1])):
-                if file2[1][i] == Q2 and file2[3][i] == cos_th:
-                    x_data.append(file2[0][i])
-                    y_data.append(file2[j][i])
-                    dy_data.append(file2[j+1][i])
-        if len(file3) > 0:
-            for i in range(0, len(file3[1])):
-                if file3[1][i] == Q2 and file3[3][i] == cos_th:
-                    x_data.append(file3[0][i])
-                    y_data.append(file3[j][i])
-                    dy_data.append(file3[j+1][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS data")
-
-    if a == 1 and Q2 == 0:
-        for i in range(0, len(file[1])):
-            if abs(file[0][i] - W) < 1e-9:
-                x_data.append(file[1][i])
-                y_data.append(file[2][i])
-                dy_data.append(file[3][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS Photo data")
-
-    plt.xlabel('$\cos$')
-    if name == "St":
-        plt.ylabel('$S_{t}$, [nb/sr]')
-        plt.title('$S_{t}$, [nb/sr]')
-    if name == "Sl":
-        plt.ylabel('$S_{l}$, [nb/sr]')
-        plt.title('$S_{l}$, [nb/sr]')
-    if name == "Slt":
-        plt.ylabel('$S_{lt}$, [nb/sr]')
-        plt.title('$S_{lt}$, [nb/sr]')
-    if name == "Stt":
-        plt.ylabel('$S_{tt}$, [nb/sr]')
-        plt.title('$S_{tt}$, [nb/sr]')
-    if name == "Su":
-        plt.ylabel('$S_{u}$, [nb/sr]')
-        plt.title('$S_{u}$, [nb/sr]')
-
-    plt.legend(prop={'size': 20})
-
-    # plt.show()
-
-    if name == "St":
-        plt.savefig(
-            f"./pictures/St_cos_{obj.name}_{Q2}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Sl":
-        plt.savefig(
-            f"./pictures/Sl_cos_{obj.name}_{Q2}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Slt":
-        plt.savefig(
-            f"./pictures/Slt_cos_{obj.name}_{Q2}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Stt":
-        plt.savefig(
-            f"./pictures/Stt_cos_{obj.name}_{Q2}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Su":
-        plt.savefig(
-            f"./pictures/Su_cos_{obj.name}_{Q2}_{W}_{E_beam}.pdf", bbox_inches='tight')
-
-    plt.clf()
-
-
-def plot_str_Q2(name: str, obj: Model, W: float, cos_th: float, E_beam: float):
-
-    a = 0
-    b = 0
-    c = 0
-    d = 0
-    e = 0
-
-    if name == "St":
-        a = 1
-    if name == "Sl":
-        b = 1
-    if name == "Slt":
-        c = 1
-        j = 6
-    if name == "Stt":
-        d = 1
-        j = 8
-    if name == "Su":
-        e = 1
-        j = 4
-
-    obj.cos_th = cos_th
-    obj.W = W
-    obj.E_beam = E_beam
-
-    x = np.arange(0.0, 5.0, 0.05)
-    y = []
-    dy = []
-
-    for Q2 in x:
-        obj.Q2 = Q2
-        res = obj.Str_func_all()
-        y.append(a*res[0] + b*res[2] + c*res[4] + d*res[6] + e*(res[0] + obj.eps(W, Q2)*res[2]))
-        dy.append(a*res[1] + b*res[3] + c*res[5] + d*res[7] + e *
-                  sqrt(res[1]**2 + obj.eps(W, Q2)**2*res[3]**2))
-
-    fig = plt.gcf()
-    fig.set_size_inches(18.5, 10.5, forward=True)
-    fig.set_dpi(100)
-
-    plt.style.use('bmh')
-
-    plt.scatter(x, y)
-    plt.errorbar(x, y, yerr=dy, fmt="o",
-                 label=f'W = {W} GeV\n $\cos$'+r'$\theta$ = ' + f'{cos_th}\nE = {E_beam} GeV')
-
-    data_presence = True
-
-    file1 = []
-    file2 = []
-    file3 = []
-    file = []
-
-    if obj.name == "K+L":
-        plt.plot(x, y, label=f"$K^+\Lambda$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data_dat/P1.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data_dat/P2.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data_dat/P3.dat', unpack=True)
-
-        file = np.loadtxt('./Data_dat/Diff_L_Photo.dat', unpack=True)
-
-    if obj.name == "K+S0":
-        plt.plot(x, y, label=f"$K^+\Sigma^0$")
-        if E_beam == 2.567 or e == 0:
-            file1 = np.loadtxt('./Data/P4.dat', unpack=True)
-        if E_beam == 4.056 or e == 0:
-            file2 = np.loadtxt('./Data/P5.dat', unpack=True)
-        if E_beam == 5.499 or e == 0:
-            file3 = np.loadtxt('./Data/P6.dat', unpack=True)
-
-        file = np.loadtxt('./Data/Diff_S_Photo.dat', unpack=True)
-
-    x_data = []
-    y_data = []
-    dy_data = []
-
-    if a == 1 or b == 1 or len(file1) + len(file2) + len(file3) == 0:
-        data_presence = False
-
-    if data_presence:
-        if len(file1) > 0:
-            for i in range(0, len(file1[1])):
-                if abs(file1[0][i] - W) < 1e-9 and abs(file1[3][i] - cos_th) < 1e-9:
-                    x_data.append(file1[1][i])
-                    y_data.append(file1[j][i])
-                    dy_data.append(file1[j+1][i])
-        if len(file2) > 0:
-            for i in range(0, len(file2[1])):
-                if abs(file2[0][i] - W) < 1e-9 and abs(file2[3][i] - cos_th) < 1e-9:
-                    x_data.append(file2[1][i])
-                    y_data.append(file2[j][i])
-                    dy_data.append(file2[j+1][i])
-        if len(file3) > 0:
-            for i in range(0, len(file3[1])):
-                if abs(file3[0][i] - W) < 1e-9 and abs(file3[3][i] - cos_th) < 1e-9:
-                    x_data.append(file3[1][i])
-                    y_data.append(file3[j][i])
-                    dy_data.append(file3[j+1][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS data")
-
-    if a == 1:
-        for i in range(0, len(file[1])):
-            if abs(file[0][i] - W) < 1e-9 and abs(file[1][i] - cos_th) < 1e-9:
-                x_data.append(0)
-                y_data.append(file[2][i])
-                dy_data.append(file[3][i])
-        if len(x_data) != 0:
-            plt.scatter(x_data, y_data)
-            plt.errorbar(x_data, y_data, yerr=dy_data, fmt="o", label=f"CLAS Photo data")
-
-    plt.xlabel('$Q^2, GeV^{2}$')
-    if name == "St":
-        plt.ylabel('$S_{t}$, [nb/sr]')
-        plt.title('$S_{t}$, [nb/sr]')
-    if name == "Sl":
-        plt.ylabel('$S_{l}$, [nb/sr]')
-        plt.title('$S_{l}$, [nb/sr]')
-    if name == "Slt":
-        plt.ylabel('$S_{lt}$, [nb/sr]')
-        plt.title('$S_{lt}$, [nb/sr]')
-    if name == "Stt":
-        plt.ylabel('$S_{tt}$, [nb/sr]')
-        plt.title('$S_{tt}$, [nb/sr]')
-    if name == "Su":
-        plt.ylabel('$S_{u}$, [nb/sr]')
-        plt.title('$S_{u}$, [nb/sr]')
-
-    plt.legend(prop={'size': 20})
-
-    # plt.show()
-
-    if name == "St":
-        plt.savefig(
-            f"./pictures/St_Q2_{obj.name}_{cos_th}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Sl":
-        plt.savefig(
-            f"./pictures/Sl_Q2_{obj.name}_{cos_th}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Slt":
-        plt.savefig(
-            f"./pictures/Slt_Q2_{obj.name}_{cos_th}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Stt":
-        plt.savefig(
-            f"./pictures/Stt_Q2_{obj.name}_{cos_th}_{W}_{E_beam}.pdf", bbox_inches='tight')
-    if name == "Su":
-        plt.savefig(
-            f"./pictures/Su_Q2_{obj.name}_{cos_th}_{W}_{E_beam}.pdf", bbox_inches='tight')
-
-    plt.clf()
+        fig.update_xaxes(title_text=r'$Q^{2} \text{ [GeV}^{2}\text{]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\gamma^{*}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+
+        title = r'$\text{Diff. cross section } W = %.2f \text{ GeV}; \cos{\theta} = %.2f; \phi = %.1f \text{ degree}$' % (
+            phase_space['W'][0], phase_space['cos_th'][0], phase_space['phi'][0])
+
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    elif cos_th_axis:
+        cos_th = np.arange(-1.0, 1.0, 0.01)
+        cs_model = Model(options, phase_space['W'], phase_space['Q2'], cos_th, phase_space['phi'])
+
+        cs_list = cs_model.Point_diff().sort_values(by=['cos_th']).reset_index(drop=True)
+
+        fig = make_subplots(rows=1, cols=1)
+
+        cos_th = cs_list['cos_th']
+        cs = cs_list['cs']
+        dcs = cs_list['dcs']
+
+        fig.add_trace(go.Scatter(x=cos_th, y=cs, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=cs+dcs, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=cos_th, y=cs-dcs, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
+
+        fig.update_xaxes(title_text=r'$\cos{\theta}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\gamma^{*}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+
+        title = r'$\text{Diff. cross section } W = %.2f \text{ GeV}; Q^{2} = %.2f \text{ GeV}^2; \phi = %.1f \text{ degree}$' % (
+            phase_space['W'][0], phase_space['Q2'][0], phase_space['phi'][0])
+
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    elif phi_axis:
+        phi = np.arange(-180, 180, 1)
+        cs_model = Model(options, phase_space['W'], phase_space['Q2'], phase_space['cos_th'], phi)
+
+        cs_list = cs_model.Point_diff().sort_values(by=['phi']).reset_index(drop=True)
+
+        fig = make_subplots(rows=1, cols=1)
+
+        phi = cs_list['phi']
+        cs = cs_list['cs']
+        dcs = cs_list['dcs']
+
+        fig.add_trace(go.Scatter(x=phi, y=cs, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=phi, y=cs+dcs, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=phi, y=cs-dcs, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
+
+        fig.update_xaxes(title_text=r'$\phi \text{ [degree]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\gamma^{*}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+
+        title = r'$\text{Diff. cross section } W = %.2f \text{ GeV}; Q^{2} = %.2f \text{ GeV}^2; \cos{\theta} = %.2f$' % (
+            phase_space['W'][0], phase_space['Q2'][0], phase_space['phi'][0])
+
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    # fig.show()
+    return fig
+
+
+def Show_str_func(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_th_axis=False):
+    if W_axis:
+        W = np.arange(1.61, 2.65, 0.01)
+        cs_model = Model(options, W, phase_space['Q2'], phase_space['cos_th'], phase_space['phi'])
+        cs_list = cs_model.Str_func_all().sort_values(by=['W']).reset_index(drop=True)
+
+        fig = make_subplots(rows=2, cols=2)
+
+        W = cs_list['W']
+
+        St = cs_list['St']
+        Sl = cs_list['Sl']
+        Slt = cs_list['Slt']
+        Stt = cs_list['Stt']
+
+        dSt = cs_list['dSt']
+        dSl = cs_list['dSl']
+        dSlt = cs_list['dSlt']
+        dStt = cs_list['dStt']
+
+        fig.add_trace(go.Scatter(x=W, y=St, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=St+dSt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=W, y=St-dSt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
+
+        fig.add_trace(go.Scatter(x=W, y=Sl, name="Longitudinal", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=Sl+dSl, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=W, y=Sl-dSl, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=2)
+
+        fig.add_trace(go.Scatter(x=W, y=Slt, name="LT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=Slt+dSlt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=W, y=Slt-dSlt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=1)
+
+        fig.add_trace(go.Scatter(x=W, y=Stt, name="TT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=Stt+dStt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=W, y=Stt-dStt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=2)
+
+        fig.update_xaxes(title_text=r'$\text{W [GeV]}$', row=1, col=1)
+        fig.update_xaxes(title_text=r'$\text{W [GeV]}$', row=1, col=2)
+        fig.update_xaxes(title_text=r'$\text{W [GeV]}$', row=2, col=1)
+        fig.update_xaxes(title_text=r'$\text{W [GeV]}$', row=2, col=2)
+
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{T}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{L}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=2)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{LT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{TT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=2)
+
+        title = r'$\text{Structure functions for } Q^{2} = %.2f \text{ GeV }^{2}; \cos{\theta} = %.2f$' % (
+            cs_list['Q2'][0], cs_list['cos_th'][0])
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    elif Q2_axis:
+        Q2 = np.arange(0, 5, 0.05)
+        cs_model = Model(options, phase_space['W'], Q2, phase_space['cos_th'], phase_space['phi'])
+        cs_list = cs_model.Str_func_all().sort_values(by=['Q2'])
+
+        fig = make_subplots(rows=2, cols=2)
+
+        Q2 = cs_list['Q2']
+
+        St = cs_list['St']
+        Sl = cs_list['Sl']
+        Slt = cs_list['Slt']
+        Stt = cs_list['Stt']
+
+        dSt = cs_list['dSt']
+        dSl = cs_list['dSl']
+        dSlt = cs_list['dSlt']
+        dStt = cs_list['dStt']
+
+        fig.add_trace(go.Scatter(x=Q2, y=St, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=St+dSt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=Q2, y=St-dSt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
+
+        fig.add_trace(go.Scatter(x=Q2, y=Sl, name="Longitudinal", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=Sl+dSl, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=Q2, y=Sl-dSl, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=2)
+
+        fig.add_trace(go.Scatter(x=Q2, y=Slt, name="LT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=Slt+dSlt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=Q2, y=Slt-dSlt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=1)
+
+        fig.add_trace(go.Scatter(x=Q2, y=Stt, name="TT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=Stt+dStt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=Q2, y=Stt-dStt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=2)
+
+        fig.update_xaxes(title_text=r'$Q^{2} \text{ [GeV}^{2}\text{]}$', row=1, col=1)
+        fig.update_xaxes(title_text=r'$Q^{2} \text{ [GeV}^{2}\text{]}$', row=1, col=2)
+        fig.update_xaxes(title_text=r'$Q^{2} \text{ [GeV}^{2}\text{]}$', row=2, col=1)
+        fig.update_xaxes(title_text=r'$Q^{2} \text{ [GeV}^{2}\text{]}$', row=2, col=2)
+
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{T}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{L}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=2)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{LT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{TT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=2)
+
+        title = r'$\text{Structure functions for } W = %.2f \text{ GeV}; \cos{\theta} = %.2f$' % (
+            cs_list['W'][0], cs_list['cos_th'][0])
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    elif cos_th_axis:
+        cos_th = np.arange(-1, 1, 0.01)
+        cs_model = Model(options, phase_space['W'], phase_space['Q2'], cos_th, phase_space['phi'])
+        cs_list = cs_model.Str_func_all().sort_values(by=['cos_th'])
+
+        fig = make_subplots(rows=2, cols=2)
+
+        cos_th = cs_list['cos_th']
+
+        St = cs_list['St']
+        Sl = cs_list['Sl']
+        Slt = cs_list['Slt']
+        Stt = cs_list['Stt']
+
+        dSt = cs_list['dSt']
+        dSl = cs_list['dSl']
+        dSlt = cs_list['dSlt']
+        dStt = cs_list['dStt']
+
+        fig.add_trace(go.Scatter(x=cos_th, y=St, name="Transverse", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=St+dSt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=cos_th, y=St-dSt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=1)
+
+        fig.add_trace(go.Scatter(x=cos_th, y=Sl, name="Longitudinal", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=Sl+dSl, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=cos_th, y=Sl-dSl, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=1, col=2)
+
+        fig.add_trace(go.Scatter(x=cos_th, y=Slt, name="LT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=Slt+dSlt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=cos_th, y=Slt-dSlt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=1)
+
+        fig.add_trace(go.Scatter(x=cos_th, y=Stt, name="TT", mode='lines',
+                      line=dict(color='rgb(31, 119, 180)')), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=Stt+dStt, mode='lines',
+                      marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=2, col=2)
+        fig.add_trace(go.Scatter(name='Lower Bound', x=cos_th, y=Stt-dStt, mode='lines', marker=dict(color="#444"),
+                      line=dict(width=0), fillcolor='rgba(68, 68, 68, 0.3)', fill='tonexty', showlegend=False), row=2, col=2)
+
+        fig.update_xaxes(title_text=r'$\cos{\theta}$', row=1, col=1)
+        fig.update_xaxes(title_text=r'$\cos{\theta}$', row=1, col=2)
+        fig.update_xaxes(title_text=r'$\cos{\theta}$', row=2, col=1)
+        fig.update_xaxes(title_text=r'$\cos{\theta}$', row=2, col=2)
+
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{T}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{L}}}{\text{d}\Omega} \text{ [nb]}$', row=1, col=2)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{LT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=1)
+        fig.update_yaxes(
+            title_text=r'$\dfrac{\text{d}\sigma_{\text{TT}}}{\text{d}\Omega} \text{ [nb]}$', row=2, col=2)
+
+        title = r'$\text{Structure functions for } W = %.2f \text{ GeV}; Q^{2} = %.2f \text{ GeV}^{2}$' % (
+            cs_list['W'][0], cs_list['Q2'][0])
+        fig.update_layout(height=768, width=1366, hovermode="x", title_text=title)
+
+    # fig.show()
+    return fig

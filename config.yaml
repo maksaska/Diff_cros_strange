@@ -1,0 +1,51 @@
+model:
+  ratio_str: True
+  add_factor: True
+  W_sys: True
+  err_option: 3
+  channel: "K+L"
+  E_beam: 6.535
+
+cs_grid:
+    str_func: False
+    diff_cs: False
+    W: [1.7, 1.8]
+    Q2: [0.5, 0.8]
+    cos_th: [0.2, 0.6]
+    phi: [-20, 30]
+
+av_cs_grid:
+    method1:
+        active: False
+        bin1: {'W': [1.7, 1.8], 'Q2': [0.5, 1.5], 'cos_th': [0, 1.0], 'phi': [0.0, 45]}
+        bin2: {'W': [1.8, 1.9], 'Q2': [0.5, 1.5], 'cos_th': [0, 1.0], 'phi': [0.0, 45]}
+        bin3: {'W': [1.9, 2.0], 'Q2': [0.5, 1.5], 'cos_th': [0, 1.0], 'phi': [0.0, 45]}
+        bin4: {'W': [2.0, 2.1], 'Q2': [0.5, 1.5], 'cos_th': [0, 1.0], 'phi': [0.0, 45]}
+    method2:
+        active: False
+        plot: True
+        W_axis: False
+        Q2_axis: True
+        cos_th_axis: False
+        phi_axis: False
+        W: 2.0
+        Q2: 2.0
+        cos_th: 0
+        phi: 45
+        dW: 0.1
+        dQ2: 0.5
+        dcos_th: 0.5
+        dphi: 45
+
+plot:
+    active: False
+    plot_cs: True
+    plot_str_func: True
+    W_axis: False
+    Q2_axis: True
+    cos_th_axis: False
+    phi_axis: False
+    W: 2.0
+    Q2: 2.0
+    cos_th: 0
+    phi: 45

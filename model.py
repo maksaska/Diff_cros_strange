@@ -9,33 +9,34 @@ import numpy as np
 
 class Model:
 
-    def __init__(self, name: str, W: list, Q2: list, cos_th: list, phi: list, E_beam=0.0, ratio_str=True, add_factor=True, W_sys=True, err_option=3):
+    def __init__(self, options, W: list, Q2: list, cos_th: list, phi: list):
         # Check the channel
-        assert name == "K+L" or name == "K+S0", f"Channel name: {name} is invalid"
+        assert options[
+            'channel'] == "K+L" or options['channel'] == "K+S0", f"Channel name: {options['channel']} is invalid"
         # Check the phase space parameters
         for i in Q2:
             assert i >= 0, f"Q2: {i} is lower than zero"
         for i in cos_th:
             assert i >= -1 and i <= 1, f"cos_th: {i} is out of [-1, 1] interval"
-        assert E_beam >= 0, f"E_beam: {E_beam} is lower than zero"
-        if name == "K+L":
+        assert options['E_beam'] >= 0, f"E_beam: {options['E_beam']} is lower than zero"
+        if options['channel'] == "K+L":
             for i in W:
                 assert i >= 1.61, f"W: {i} is less than threshold for KLambda channel"
-        elif name == "K+S0":
+        elif options['channel'] == "K+S0":
             for i in W:
                 assert i >= 1.68632, f"W: {i} is less than threshold for KSigma0 channel"
         # Assignment
-        self.__name = name
+        self.__name = options['channel']
         self.__W = W
         self.__Q2 = Q2
         self.__cos_th = cos_th
         self.__phi = phi
-        self.__E_beam = E_beam
-        self.__Data = Files(name)
-        self.__ratio_str = ratio_str
-        self.__add_factor = add_factor
-        self.__W_sys = W_sys
-        self.__err_option = err_option
+        self.__E_beam = options['E_beam']
+        self.__Data = Files(options['channel'])
+        self.__ratio_str = options['ratio_str']
+        self.__add_factor = options['add_factor']
+        self.__W_sys = options['W_sys']
+        self.__err_option = options['err_option']
 
         vol = []
         vol_sf = []
@@ -924,16 +925,16 @@ class Model:
             result.reset_index(inplace=True)
 
             if self.err_option == 1:
-                result.loc[result['cos_th'] < x.min(), 'dSt'] = reader.iloc[0]['dSt']
+                result.loc[result['cos_th'] < x.min(), 'dSt'] = reader.iloc[0]['dcs']
                 result.loc[result['cos_th'] >
-                           x.max(), 'dSt'] = reader.iloc[len(reader)-1]['dSt']
+                           x.max(), 'dSt'] = reader.iloc[len(reader)-1]['dcs']
 
             if self.err_option == 2:
-                result.loc[result['cos_th'] < x.min(), 'dSt'] = reader.iloc[0]['dSt'] * \
+                result.loc[result['cos_th'] < x.min(), 'dSt'] = reader.iloc[0]['dcs'] * \
                     ((-result.loc[(result['cos_th'] < x.min()),
                      'cos_th'] + x.min())/(1 + x.min()) + 1)
                 result.loc[result['cos_th'] > x.max(), 'dSt'] = reader.iloc[len(
-                    reader)-1]['dSt']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
+                    reader)-1]['dcs']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
 
             result.loc[result['cos_th'] < x.min(), 'St'] = Su(
                 x.min(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
@@ -1052,7 +1053,7 @@ class Model:
             if self.add_factor:
                 popt_St, pcov_St = curve_fit(STT_f, x, St, sigma=dSt, absolute_sigma=True)
             else:
-                popt_St, pcov_St = curve_fit(SU, x, St, sigma=dSt, absolute_sigma=True)
+                popt_St, pcov_St = curve_fit(Su, x, St, sigma=dSt, absolute_sigma=True)
 
             result = pd.DataFrame()
 
@@ -1297,17 +1298,18 @@ class Model:
 
         vol1 = self.__Photo_diff(vol1)
         vol2 = self.__Str_func_for_lower(vol2)
-        vol3 = self.__Photo_Sigma(vol3)
+        if vol3.shape[0] > 0:
+            vol3 = self.__Photo_Sigma(vol3)
 
-        vol3 = vol3.merge(vol1, on=['W', 'Q2', 'cos_th'])
-        vol3['Stt'] = -vol3['St']*vol3['Sigma']
-        vol3['dStt'] = ((vol3['dSt']*vol3['Sigma'])**2 + (vol3['St']*vol3['dSigma'])**2)**0.5
+            vol3 = vol3.merge(vol1, on=['W', 'Q2', 'cos_th'])
+            vol3['Stt'] = -vol3['St']*vol3['Sigma']
+            vol3['dStt'] = ((vol3['dSt']*vol3['Sigma'])**2 + (vol3['St']*vol3['dSigma'])**2)**0.5
 
-        vol3.drop(columns=['St', 'dSt', 'Sigma', 'dSigma',
-                  'Sl', 'dSl', 'Slt', 'dSlt'], inplace=True)
+            vol3.drop(columns=['St', 'dSt', 'Sigma', 'dSigma',
+                               'Sl', 'dSl', 'Slt', 'dSlt'], inplace=True)
 
-        vol3 = pd.concat(
-            [vol3, vol2.drop(columns=['St', 'dSt', 'Slt', 'dSlt', 'Sl', 'dSl'])], ignore_index=True)
+            vol3 = pd.concat(
+                [vol3, vol2.drop(columns=['St', 'dSt', 'Slt', 'dSlt', 'Sl', 'dSl'])], ignore_index=True)
 
         str3 = pd.DataFrame()
         str3 = pd.concat([vol1, vol2.drop(columns=['Stt', 'dStt'])], ignore_index=True)
@@ -1414,6 +1416,15 @@ class Model:
         del result_from_Sigma, result_from_None, result_from_ratio
         del W_Q2_dict, W_Q2_None, W_Q2_Sigma
         del result_Stt
+
+        result['St'] = result['St'].astype(float)
+        result['Sl'] = result['Sl'].astype(float)
+        result['Slt'] = result['Slt'].astype(float)
+        result['Stt'] = result['Stt'].astype(float)
+        result['dSt'] = result['dSt'].astype(float)
+        result['dSl'] = result['dSl'].astype(float)
+        result['dSlt'] = result['dSlt'].astype(float)
+        result['dStt'] = result['dStt'].astype(float)
 
         return result
 
@@ -1805,7 +1816,7 @@ class Model:
         del vol, vol1, vol2
         del vol_inter, vol_extra, vol_zero
 
-        return result
+        return result.astype(float)
 
     def Point_diff(self):
         result = self.req_volume
@@ -1832,15 +1843,15 @@ class Model:
         return result
 
     @classmethod
-    def Average_diff(cls, bin_list: list, E_beam: float, ratio_str: bool, add_factor: bool, W_sys: bool, err_option: bool):
+    def Average_diff(cls, bin_list: list, options: dict):
         result = pd.DataFrame()
         result_final = pd.DataFrame()
 
         for bin in bin_list:
             result = pd.concat([result, bin.DataFrame], ignore_index=True)
 
-        config_model = Model("K+L", result['W'].drop_duplicates().tolist(), result['Q2'].drop_duplicates(
-        ).tolist(), result['cos_th'].drop_duplicates().tolist(), result['phi'].drop_duplicates().tolist(), E_beam, ratio_str, add_factor, W_sys, err_option)
+        config_model = Model(options, result['W'].drop_duplicates().tolist(), result['Q2'].drop_duplicates(
+        ).tolist(), result['cos_th'].drop_duplicates().tolist(), result['phi'].drop_duplicates().tolist())
         print(config_model)
         result = config_model.Point_diff()
 
@@ -1856,3 +1867,70 @@ class Model:
                             'phi': 'phi_avg', 'cs': 'cs_avg', 'dcs': 'dcs_avg'}, inplace=True)
 
         return result_final
+
+    @classmethod
+    def Average_diff_dependency(cls, phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_th_axis=False, phi_axis=False):
+
+        bins = []
+
+        if W_axis and Q2_axis:
+            for W in range(int(1/phase_space['delta_W'])):
+                for Q2 in range(int(5/phase_space['delta_Q2'])):
+                    bins.append(Bin({'W': [1.61 + W*phase_space['delta_W'], 1.61 + (W + 1)*phase_space['delta_W']], 'Q2': [Q2*phase_space['delta_Q2'], (Q2 + 1)*phase_space['delta_Q2']], 'cos_th': [phase_space['cos_th'] -
+                                phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+
+        elif W_axis and cos_th_axis:
+            for W in range(int(1/phase_space['delta_W'])):
+                for cos_th in range(int(2/phase_space['delta_cos_th'])):
+                    bins.append(Bin({'W': [1.61 + W*phase_space['delta_W'], 1.61 + (W + 1)*phase_space['delta_W']], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] + phase_space['delta_Q2']/2],
+                                'cos_th': [-1 + cos_th*phase_space['delta_cos_th'], -1 + (cos_th+1)*phase_space['delta_cos_th']], 'phi': [phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+        elif W_axis and phi_axis:
+            for W in range(int(1/phase_space['delta_W'])):
+                for phi in range(int(360/phase_space['delta_phi'])):
+                    bins.append(Bin({'W': [1.61 + W*phase_space['delta_W'], 1.61 + (W + 1)*phase_space['delta_W']], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] + phase_space['delta_Q2']/2], 'cos_th': [
+                        phase_space['cos_th'] - phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phi*phase_space['delta_phi'], (phi+1)*phase_space['delta_phi']]}))
+            return Model.Average_diff(bins, options)
+        elif Q2_axis and cos_th_axis:
+            for Q2 in range(int(5/phase_space['delta_Q2'])):
+                for cos_th in range(int(2/phase_space['delta_cos_th'])):
+                    bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [Q2*phase_space['delta_Q2'], (Q2 + 1)*phase_space['delta_Q2']], 'cos_th': [-1 +
+                                cos_th*phase_space['delta_cos_th'], -1 + (cos_th+1)*phase_space['delta_cos_th']], 'phi': [phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+        elif Q2_axis and phi_axis:
+            for Q2 in range(int(5/phase_space['delta_Q2'])):
+                for phi in range(int(360/phase_space['delta_phi'])):
+                    bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [Q2*phase_space['delta_Q2'], (Q2 + 1)*phase_space['delta_Q2']], 'cos_th': [
+                        phase_space['cos_th'] - phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phi*phase_space['delta_phi'], (phi+1)*phase_space['delta_phi']]}))
+            return Model.Average_diff(bins, options)
+        elif cos_th_axis and phi_axis:
+            for cos_th in range(int(2/phase_space['delta_cos_th'])):
+                for phi in range(int(360/phase_space['delta_phi'])):
+                    bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] +
+                                phase_space['delta_Q2']/2], 'cos_th': [-1 + cos_th*phase_space['delta_cos_th'], -1 + (cos_th+1)*phase_space['delta_cos_th']], 'phi': [phi*phase_space['delta_phi'], (phi+1)*phase_space['delta_phi']]}))
+            return Model.Average_diff(bins, options)
+        elif W_axis:
+            for W in range(int(1/phase_space['delta_W'])):
+                bins.append(Bin({'W': [1.61 + W*phase_space['delta_W'], 1.61 + (W + 1)*phase_space['delta_W']], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] + phase_space['delta_Q2']/2], 'cos_th': [
+                            phase_space['cos_th'] - phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+        elif Q2_axis:
+            for Q2 in range(int(5/phase_space['delta_Q2'])):
+                bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [Q2*phase_space['delta_Q2'], (Q2 + 1)*phase_space['delta_Q2']], 'cos_th': [
+                            phase_space['cos_th'] - phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+        elif cos_th_axis:
+            for cos_th in range(int(2/phase_space['delta_cos_th'])):
+                bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] + phase_space['delta_Q2']/2], 'cos_th': [-1 + cos_th*phase_space['delta_cos_th'], -1 + (cos_th+1)*phase_space['delta_cos_th']], 'phi': [
+                            phase_space['phi'] - phase_space['delta_phi']/2, phase_space['phi'] + phase_space['delta_phi']/2]}))
+            return Model.Average_diff(bins, options)
+        elif phi_axis:
+            for phi in range(int(360/phase_space['delta_phi'])):
+                bins.append(Bin({'W': [phase_space['W'] - phase_space['delta_W']/2, phase_space['W'] + phase_space['delta_W']/2], 'Q2': [phase_space['Q2'] - phase_space['delta_Q2']/2, phase_space['Q2'] + phase_space['delta_Q2']/2], 'cos_th': [
+                            phase_space['cos_th'] - phase_space['delta_cos_th']/2, phase_space['cos_th'] + phase_space['delta_cos_th']/2], 'phi': [phi*phase_space['delta_phi'], (phi+1)*phase_space['delta_phi']]}))
+            return Model.Average_diff(bins, options)
+
+        result = pd.DataFrame()
+
+        return result

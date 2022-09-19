@@ -1,102 +1,91 @@
 from model import Model
 from bin import Bin
-from drawing import plot_cs_W, plot_cs_Q2, plot_cs_cos, plot_cs_phi, plot_str_W, plot_str_cos, plot_str_Q2
 from timer import *
+from drawing import *
+from datetime import datetime
 import numpy as np
-
-# Timer start
-start_time = time.time()
-
-# ------- Single launch --------
-
-#      Model parameters
-ratio_str = True           # Метод для Stt из отношений Stt/St
-add_factor = True          # Синусы в фитах Slt Stt по cos_th
-W_sys = True               # Дополнительная ошибка в экстраполяции St по W (при W > 2.575 GeV)
-err_option = 3  # 1, 2, 3  # 1 - константа; 2 - линецная; 3 - квадратичная экстраполяция ошибок в фитах по cos_th
-
-#        Phase space
-W = [1.64, 1.61, 1.9, 2.3, 2.6, 2.4]       # Набор W, в которых запрашивается посчитать
-Q2 = [0.5, 1.5, 2.0, 0.8, 0.9, 4, 4.5]     # Набор Q2, в которых запрашивается посчитать
-cos_th = [-0.95, 0.65, 0.7]                # Набор cos_th, в которых запрашивается посчитать
-phi = np.arange(-180, 180, 45)             # Набор phi, в которых запрашивается посчитать
-E_beam = 6.535                             # Энергия пучка
-
-#         Model init
-
-config_model = Model("K+L", W, Q2, cos_th, phi, E_beam, ratio_str, add_factor,
-                     W_sys, err_option)  # Инициализация программы перед единичным расчетом
-# Вывод настроек расчетов
-print(config_model)
-# Вывод pd.DataFrame() с структурными функциями
-print(config_model.Str_func_all())
-# Вывод pd.DataFrame() с дифференциальными сечениями
-print(config_model.Point_diff())
-
-# --------- Average launch --------
-
-ratio_str = True
-add_factor = True
-W_sys = True
-err_option = 3  # 1, 2, 3
-
-E_beam = 6.535
-
-# Бин-1: Bin([W_min, W_max], кол-во узлов W_n, [Q2_min, Q2_max], Q2_n, [cos_th_min, cos_th_max], cos_th_n, [phi_min, phi_max], phi_n)
-# Лист из бинов, где необходимо посчитать среднее дифф сечение
-bins = []
-bins.append(Bin([1.61, 1.65], 3, [0, 1.5], 3, [-1, 1], 5, [0, 360], 9))             # Бин-1
-bins.append(Bin([1.65, 1.69], 3, [0, 1.5], 3, [-1, 1], 5, [0, 360], 9))             # Бин-2
-bins.append(Bin([1.69, 1.73], 3, [0, 1.5], 3, [-1, 1], 5, [0, 360], 9))             # Бин-3
-bins.append(Bin([1.73, 1.78], 3, [0, 1.5], 3, [-1, 1], 5, [0, 360], 9))             # Бин-4
-bins.append(Bin([1.73, 1.78], 10, [1.5, 1.8], 10, [-1, -0.5], 10, [0, 45], 10))     # Бин-5
-
-# average_list - pd.DataFrame() с средними значениями
-average_list = Model.Average_diff(bins, E_beam, ratio_str, add_factor, W_sys, err_option)
-
-print(average_list)
-
-# -------------------------------------
-
-# Timer end
-end_time = time.time()
-time_lapsed = end_time - start_time
-time_convert(time_lapsed)
+import plotly.express as px
+import yaml
+import os
 
 
-# DRAWING
+def main():
+    with open('config.yaml', 'r') as file:
+        configuration = yaml.safe_load(file)
 
-# print(config_model.Str_func_all())
+    start_time = time.time()
+    today = datetime.now()
+    tag = today.strftime("%b_%d_%Y_%H_%M_%S")
 
-#plot_cs_W(config_model, 0.8, 0.0, 6.535, 10)
-#plot_cs_Q2(config_model, 1.8, 0.0, 6.535, 10)
-#plot_cs_cos(config_model, 1.8, 0.5, 6.535, 10)
-#plot_cs_phi(config_model, 1.8, 0.5, 0.5, 6.535)
+    os.makedirs('./Results/str_fun', exist_ok=True)
+    os.makedirs('./Results/diff_cs', exist_ok=True)
+    os.makedirs('./Results/av_diff_cs', exist_ok=True)
+    os.makedirs('./Results/Plots', exist_ok=True)
 
-#plot_str_W("St", config_model, 0.8, 0.1, 2.567)
-#plot_str_W("Su", config_model, 1.0, 0.35, 2.567)
-#plot_str_W("Slt", config_model, 1.0, 0.35, 4.056)
-#plot_str_cos("Slt", config_model, 1.725, 0.65, 2.567)
-#plot_str_cos("Stt", config_model, 2.375, 0.0, 2.567)
+    options = {'ratio_str': configuration['model']['ratio_str'], 'add_factor': configuration['model']['add_factor'], 'W_sys': configuration['model']
+               ['W_sys'], 'err_option': configuration['model']['err_option'], 'E_beam': configuration['model']['E_beam'], 'channel': configuration['model']['channel']}
 
-#plot_str_Q2("Stt", config_model, 1.615, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 1.64, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 1.7, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 1.8, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 1.9, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.0, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.1, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.2, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.3, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.4, 0.5, 2.567)
-#plot_str_cos("Stt", config_model, 2.375, 0.0, 2.567)
-#plot_str_Q2("Stt", config_model, 2.5, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.6, 0.6, 2.567)
-#plot_str_Q2("Stt", config_model, 2.65, 0.6, 2.567)
+    # ------- Single launch --------
 
-#plot_str_Q2("St", config_model, 2.6, 0.4, 2.567)
-#plot_str_Q2("Sl", config_model, 2.6, 0.4, 2.567)
-#plot_str_Q2("Slt", config_model, 2.6, 0.4, 2.567)
-#plot_str_Q2("Stt", config_model, 2.6, 0.4, 2.567)
+    if configuration['cs_grid']['str_func'] + configuration['cs_grid']['diff_cs']:
+        W = configuration['cs_grid']['W']
+        Q2 = configuration['cs_grid']['Q2']
+        cos_th = configuration['cs_grid']['cos_th']
+        phi = configuration['cs_grid']['phi']
 
-#plot_cs_phi(config_model, 1.8, 0.5, 0.5, 6.535)
+        config_model = Model(options, W, Q2, cos_th, phi)
+
+        if configuration['cs_grid']['str_func']:
+            config_model.Str_func_all().to_csv(f'./Results/str_fun/{tag}.csv', index=False)
+
+        if configuration['cs_grid']['diff_cs']:
+            config_model.Point_diff().to_csv(f'./Results/diff_cs/{tag}.csv', index=False)
+
+    # --------- Average cross section (method_1) --------
+
+    if configuration['av_cs_grid']['method1']['active']:
+        bins = []
+        for i in configuration['av_cs_grid']['method1']:
+            if i == 'active':
+                continue
+            bins.append(Bin(configuration['av_cs_grid']['method1'][i]))
+
+        Model.Average_diff(bins, options).to_csv(f'./Results/av_diff_cs/{tag}.csv', index=False)
+
+    # --------- Average cross section (method_2) --------
+
+    if configuration['av_cs_grid']['method2']['active']:
+        phase_space = {'W': configuration['av_cs_grid']['method2']['W'], 'Q2': configuration['av_cs_grid']['method2']['Q2'], 'cos_th': configuration['av_cs_grid']['method2']['cos_th'], 'phi': configuration['av_cs_grid']['method2']['phi'],
+                       'delta_W': configuration['av_cs_grid']['method2']['dW'], 'delta_Q2': configuration['av_cs_grid']['method2']['dQ2'], 'delta_cos_th': configuration['av_cs_grid']['method2']['dcos_th'], 'delta_phi': configuration['av_cs_grid']['method2']['dphi']}
+
+        Model.Average_diff_dependency(phase_space, options, W_axis=configuration['av_cs_grid']['method2']['W_axis'], Q2_axis=configuration['av_cs_grid'][
+                                      'method2']['Q2_axis'], cos_th_axis=configuration['av_cs_grid']['method2']['cos_th_axis'], phi_axis=configuration['av_cs_grid']['method2']['phi_axis']).to_csv(f'./Results/av_diff_cs/{tag}.csv', index=False)
+
+        if configuration['av_cs_grid']['method2']['plot']:
+            Show_average_cs(phase_space, options,  W_axis=configuration['av_cs_grid']['method2']['W_axis'], Q2_axis=configuration['av_cs_grid']['method2']
+                            ['Q2_axis'], cos_th_axis=configuration['av_cs_grid']['method2']['cos_th_axis'], phi_axis=configuration['av_cs_grid']['method2']['phi_axis']).write_html(f'./Results/Plots/av_cs_{tag}.html', include_mathjax='cdn')
+
+    # --------- Plots --------
+
+    if configuration['plot']['active']:
+        phase_space = {'W': [configuration['plot']['W']], 'Q2': [configuration['plot']['Q2']], 'cos_th': [
+            configuration['plot']['cos_th']], 'phi': [configuration['plot']['phi']]}
+
+        if configuration['plot']['plot_cs']:
+            Show_cs(phase_space, options, W_axis=configuration['plot']['W_axis'], Q2_axis=configuration['plot']
+                    ['Q2_axis'], cos_th_axis=configuration['plot']['cos_th_axis'], phi_axis=configuration['plot']['phi_axis']).write_html(f'./Results/Plots/cs_{tag}.html', include_mathjax='cdn')
+
+        if configuration['plot']['plot_str_func']:
+            Show_str_func(phase_space, options, W_axis=configuration['plot']['W_axis'], Q2_axis=configuration['plot']
+                          ['Q2_axis'], cos_th_axis=configuration['plot']['cos_th_axis']).write_html(f'./Results/Plots/str_func_{tag}.html', include_mathjax='cdn')
+
+    # -------------------------------------
+
+    # Timer end
+    end_time = time.time()
+    time_lapsed = end_time - start_time
+    time_convert(time_lapsed)
+
+
+if __name__ == "__main__":
+    main()
