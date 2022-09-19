@@ -11,3 +11,26 @@ The differential cross section of the kaons electroproduction off proton in the 
 
 ## Usage
 
+### Installation
+
+Python is used as a primer programming language for that project. To use it you will need the following libraries: numpy, scipy, pandas and plotly. You can check the libriaries with "pip freeze" command. Make sure you have updated all packages (e.g. 'sudo apt update' and 'sudo apt upgrade')
+
+To get this distributive use 'git clone -b python-version https://github.com/Maksaska/Diff_cros_strange.git'
+
+### How to start?
+
+Use 'config.yaml' file to set all KY model parameters. You will also need this file to fill your request. There you can find 3 modules:
+
+ **Model**: This module sets the configuration. There are 6 parameters you can change:
+
+  1. _ratio_str_: (recommended True) If True, Stt structure function is estimated from "ratio" method in the "weak" area of phase space. (See more in CLAS12 analysis note(in progress))
+  2. _add_factor_: (recommended True) If True, Slt and Stt structure functions approximation fits along cos_th axis are factorized with sin_th and sin^2_th respectivly.
+  3. W_sys: (recommended True) If True, adds an additional error to the output in the area of W extrapolation (with W > 2.575 GeV).
+  4. err_option: 
+
+
+  : True
+  : True
+  : 3
+  channel: "K+L"
+  E_beam: 6.535
