@@ -1834,7 +1834,7 @@ class Model:
         result['cs'] = result['St'] + self.eps(result['W'], result['Q2'])*result['Sl'] + self.eps(result['W'], result['Q2'])*result['Stt']*cos(
             2*result['phi']*pi/180) + (self.eps(result['W'], result['Q2'])*(self.eps(result['W'], result['Q2']) + 1))**0.5*result['Slt']*cos(result['phi']*pi/180)
         result['dcs'] = ((result['dSt'])**2 + (self.eps(result['W'], result['Q2'])*result['dSl'])**2 + (self.eps(result['W'], result['Q2'])*result['dStt']*cos(
-            2*result['phi']*pi/180))**2 + ((self.eps(result['W'], result['Q2'])*(self.eps(result['W'], result['Q2']) + 1))**0.5*result['Slt']*cos(result['phi']*pi/180))**2)**0.5
+            2*result['phi']*pi/180))**2 + ((self.eps(result['W'], result['Q2'])*(self.eps(result['W'], result['Q2']) + 1))**0.5*result['dSlt']*cos(result['phi']*pi/180))**2)**0.5
 
         result.loc[result['cs'] < 0, 'cs'] = 0
 
