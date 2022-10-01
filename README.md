@@ -87,7 +87,7 @@ Use 'config.yaml' file to set all KY model parameters. You will also need this f
   
 * To activate the calculations set 'active' input field as 'True' 
 
-* The output will be stored in html format under './Result/Plots/observable_currrent_date.html' path. **Note**: you can only choose one of the axis.
+* The output will be stored in html format under './Result/Plots/observable_currrent_date.html' path. **Note**: you can only choose one of the axes.
   
 
   
