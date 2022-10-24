@@ -19,12 +19,13 @@ class Model:
         for i in cos_th:
             assert i >= -1 and i <= 1, f"cos_th: {i} is out of [-1, 1] interval"
         assert options['E_beam'] >= 0, f"E_beam: {options['E_beam']} is lower than zero"
-        if options['channel'] == "K+L":
-            for i in W:
-                assert i >= 1.61, f"W: {i} is less than threshold for KLambda channel"
-        elif options['channel'] == "K+S0":
-            for i in W:
-                assert i >= 1.68632, f"W: {i} is less than threshold for KSigma0 channel"
+        # if options['channel'] == "K+L":
+        #    for i in W:
+        #        assert i >= 1.61, f"W: {i} is less than threshold for KLambda channel"
+        # elif options['channel'] == "K+S0":
+        #    for i in W:
+        #        assert i >= 1.68632, f"W: {i} is less than threshold for KSigma0 channel"
+
         # Assignment
         self.__name = options['channel']
         self.__W = W
@@ -256,15 +257,22 @@ class Model:
         dSlt_plus = np.array(data_table['dSlt_plus'])
         dStt_plus = np.array(data_table['dStt_plus'])
 
-        f1 = interpolate.interp1d(x, St, kind='cubic', copy=False)
-        f2 = interpolate.interp1d(x, Sl, kind='cubic', copy=False)
-        f3 = interpolate.interp1d(x, Slt, kind='cubic', copy=False)
-        f4 = interpolate.interp1d(x, Stt, kind='cubic', copy=False)
+        type = ''
 
-        f1_plus = interpolate.interp1d(x, dSt_plus, kind='cubic', copy=False)
-        f2_plus = interpolate.interp1d(x, dSl_plus, kind='cubic', copy=False)
-        f3_plus = interpolate.interp1d(x, dSlt_plus, kind='cubic', copy=False)
-        f4_plus = interpolate.interp1d(x, dStt_plus, kind='cubic', copy=False)
+        if len(x) < 4:
+            type = 'quadratic'
+        else:
+            type = 'cubic'
+
+        f1 = interpolate.interp1d(x, St, kind=type, copy=False)
+        f2 = interpolate.interp1d(x, Sl, kind=type, copy=False)
+        f3 = interpolate.interp1d(x, Slt, kind=type, copy=False)
+        f4 = interpolate.interp1d(x, Stt, kind=type, copy=False)
+
+        f1_plus = interpolate.interp1d(x, dSt_plus, kind=type, copy=False)
+        f2_plus = interpolate.interp1d(x, dSl_plus, kind=type, copy=False)
+        f3_plus = interpolate.interp1d(x, dSlt_plus, kind=type, copy=False)
+        f4_plus = interpolate.interp1d(x, dStt_plus, kind=type, copy=False)
 
         e1 = interpolate.InterpolatedUnivariateSpline(x, St, k=2)
         e2 = interpolate.InterpolatedUnivariateSpline(x, Sl, k=2)
@@ -388,6 +396,18 @@ class Model:
             y = (1-x**2)*(a + b*x + c*0.5*(3*x**2 - 1) + d*0.5*(5*x**3 - 3*x))
             return y
 
+        def Su3(x, a, b, c):
+            y = a + b*x + c*0.5*(3*x**2 - 1)
+            return y
+
+        def SLT_f3(x, a, b, c):
+            y = np.sin(np.arccos(x))*(a + b*x + c*0.5*(3*x**2 - 1))
+            return y
+
+        def STT_f3(x, a, b, c):
+            y = (1-x**2)*(a + b*x + c*0.5*(3*x**2 - 1))
+            return y
+
         result = pd.DataFrame()
 
         if len(x) > 4:
@@ -500,7 +520,7 @@ class Model:
             result.loc[result['St'] < 0, 'St'] = 0
             result.loc[result['Sl'] < 0, 'Sl'] = 0
 
-        else:
+        elif len(x) == 4:
             popt_St, pcov_St = curve_fit(Su4, x, St, sigma=dSt, absolute_sigma=True)
             popt_Sl, pcov_Sl = curve_fit(Su4, x, Sl, sigma=dSl, absolute_sigma=True)
             if self.add_factor:
@@ -593,6 +613,110 @@ class Model:
                     x.max(), popt_Slt[0], popt_Slt[1], popt_Slt[2], popt_Slt[3])
                 result.loc[result['cos_th'] > x.max(), 'Stt'] = Su4(
                     x.max(), popt_Stt[0], popt_Stt[1], popt_Stt[2], popt_Stt[3])
+            if self.add_factor:
+                result.loc[(result['cos_th'] < x.min()), 'dSlt'] = data_table.iloc[0]['dSlt'] * \
+                    (result.loc[(result['cos_th'] < x.min()), 'cos_th'] + 1)/(1 + x.min())
+                result.loc[(result['cos_th'] < x.min()), 'dStt'] = data_table.iloc[0]['dStt'] * \
+                    (result.loc[(result['cos_th'] < x.min()), 'cos_th'] + 1)/(1 + x.min())
+                result.loc[(result['cos_th'] > x.max()), 'dSlt'] = data_table.iloc[len(
+                    data_table)-1]['dSlt']*(result.loc[(result['cos_th'] > x.max()), 'cos_th'] - 1)/(-1 + x.max())
+                result.loc[(result['cos_th'] > x.max()), 'dStt'] = data_table.iloc[len(
+                    data_table)-1]['dStt']*(result.loc[(result['cos_th'] > x.max()), 'cos_th'] - 1)/(-1 + x.max())
+
+            result.loc[result['St'] < 0, 'St'] = 0
+            result.loc[result['Sl'] < 0, 'Sl'] = 0
+
+        elif len(x) < 4:
+            popt_St, pcov_St = curve_fit(Su3, x, St, sigma=dSt, absolute_sigma=True)
+            popt_Sl, pcov_Sl = curve_fit(Su3, x, Sl, sigma=dSl, absolute_sigma=True)
+            if self.add_factor:
+                popt_Slt, pcov_Slt = curve_fit(SLT_f3, x, Slt, sigma=dSlt, absolute_sigma=True)
+                popt_Stt, pcov_Stt = curve_fit(STT_f3, x, Stt, sigma=dStt, absolute_sigma=True)
+            else:
+                popt_Slt, pcov_Slt = curve_fit(Su3, x, Slt, sigma=dSlt, absolute_sigma=True)
+                popt_Stt, pcov_Stt = curve_fit(Su3, x, Stt, sigma=dStt, absolute_sigma=True)
+
+            for cos_th in self.cos_th:
+                buff = {'W': [W], 'Q2': [Q2], 'cos_th': [cos_th]}
+                arg = cos_th
+
+                buff['St'] = [Su3(cos_th, popt_St[0], popt_St[1], popt_St[2])]
+                buff['Sl'] = [Su3(cos_th, popt_Sl[0], popt_Sl[1], popt_Sl[2])]
+
+                if self.add_factor:
+                    buff['Slt'] = [SLT_f3(cos_th, popt_Slt[0], popt_Slt[1], popt_Slt[2])]
+                    buff['Stt'] = [STT_f3(cos_th, popt_Stt[0], popt_Stt[1], popt_Stt[2])]
+                    if arg < x.min():
+                        buff['Slt'] = [self.__interp_cub_TT_LT(
+                            data_table[['cos_th', 'Slt', 'dSlt']], arg)]
+                        buff['Stt'] = [self.__interp_cub_TT_LT(
+                            data_table[['cos_th', 'Stt', 'dStt']], arg)]
+                else:
+                    buff['Slt'] = [Su3(cos_th, popt_Slt[0], popt_Slt[1], popt_Slt[2])]
+                    buff['Stt'] = [Su3(cos_th, popt_Stt[0], popt_Stt[1], popt_Stt[2])]
+
+                result = pd.concat([result, pd.DataFrame(buff)], ignore_index=True)
+
+            result_for_merge = self.__interp_cub(data_table)
+
+            result_for_merge.set_index(['W', 'Q2', 'cos_th'], inplace=True, drop=True)
+            result.set_index(['W', 'Q2', 'cos_th'], inplace=True, drop=True)
+
+            result = result_for_merge.merge(result, on=['W', 'Q2', 'cos_th'])
+            result.reset_index(inplace=True)
+
+            if self.err_option == 1:
+                result.loc[result['cos_th'] < x.min(), 'dSt'] = data_table.iloc[0]['dSt']
+                result.loc[result['cos_th'] < x.min(), 'dSl'] = data_table.iloc[0]['dSl']
+                result.loc[result['cos_th'] < x.min(), 'dSlt'] = data_table.iloc[0]['dSlt']
+                result.loc[result['cos_th'] < x.min(), 'dStt'] = data_table.iloc[0]['dStt']
+                result.loc[result['cos_th'] >
+                           x.max(), 'dSt'] = data_table.iloc[len(data_table)-1]['dSt']
+                result.loc[result['cos_th'] >
+                           x.max(), 'dSl'] = data_table.iloc[len(data_table)-1]['dSl']
+                result.loc[result['cos_th'] >
+                           x.max(), 'dSlt'] = data_table.iloc[len(data_table)-1]['dSlt']
+                result.loc[result['cos_th'] >
+                           x.max(), 'dStt'] = data_table.iloc[len(data_table)-1]['dStt']
+            if self.err_option == 2:
+                result.loc[result['cos_th'] < x.min(), 'dSt'] = data_table.iloc[0]['dSt'] * \
+                    ((-result.loc[(result['cos_th'] < x.min()),
+                     'cos_th'] + x.min())/(1 + x.min()) + 1)
+                result.loc[result['cos_th'] < x.min(), 'dSl'] = data_table.iloc[0]['dSl'] * \
+                    ((-result.loc[(result['cos_th'] < x.min()),
+                     'cos_th'] + x.min())/(1 + x.min()) + 1)
+                result.loc[result['cos_th'] < x.min(), 'dSlt'] = data_table.iloc[0]['dSlt'] * \
+                    ((-result.loc[(result['cos_th'] < x.min()),
+                     'cos_th'] + x.min())/(1 + x.min()) + 1)
+                result.loc[result['cos_th'] < x.min(), 'dStt'] = data_table.iloc[0]['dStt'] * \
+                    ((-result.loc[(result['cos_th'] < x.min()),
+                     'cos_th'] + x.min())/(1 + x.min()) + 1)
+
+                result.loc[result['cos_th'] > x.max(), 'dSt'] = data_table.iloc[len(
+                    data_table)-1]['dSt']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
+                result.loc[result['cos_th'] > x.max(), 'dSl'] = data_table.iloc[len(
+                    data_table)-1]['dSl']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
+                result.loc[result['cos_th'] > x.max(), 'dSlt'] = data_table.iloc[len(
+                    data_table)-1]['dSlt']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
+                result.loc[result['cos_th'] > x.max(), 'dStt'] = data_table.iloc[len(
+                    data_table)-1]['dStt']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
+            result.loc[result['cos_th'] < x.min(), 'St'] = Su3(
+                x.min(), popt_St[0], popt_St[1], popt_St[2])
+            result.loc[result['cos_th'] < x.min(), 'Sl'] = Su3(
+                x.min(), popt_Sl[0], popt_Sl[1], popt_Sl[2])
+            result.loc[result['cos_th'] > x.max(), 'St'] = Su3(
+                x.max(), popt_St[0], popt_St[1], popt_St[2])
+            result.loc[result['cos_th'] > x.max(), 'Sl'] = Su3(
+                x.max(), popt_Sl[0], popt_Sl[1], popt_Sl[2])
+            if not(self.add_factor):
+                result.loc[result['cos_th'] < x.min(), 'Slt'] = Su3(
+                    x.min(), popt_Slt[0], popt_Slt[1], popt_Slt[2])
+                result.loc[result['cos_th'] < x.min(), 'Stt'] = Su3(
+                    x.min(), popt_Stt[0], popt_Stt[1], popt_Stt[2])
+                result.loc[result['cos_th'] > x.max(), 'Slt'] = Su3(
+                    x.max(), popt_Slt[0], popt_Slt[1], popt_Slt[2])
+                result.loc[result['cos_th'] > x.max(), 'Stt'] = Su3(
+                    x.max(), popt_Stt[0], popt_Stt[1], popt_Stt[2])
             if self.add_factor:
                 result.loc[(result['cos_th'] < x.min()), 'dSlt'] = data_table.iloc[0]['dSlt'] * \
                     (result.loc[(result['cos_th'] < x.min()), 'cos_th'] + 1)/(1 + x.min())

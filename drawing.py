@@ -7,114 +7,130 @@ import plotly.graph_objects as go
 
 
 def Show_average_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_th_axis=False, phi_axis=False):
+
+    title_cs = 'Diff. cross section [nb]'
+
+    title_W = r'$\text{W [GeV]}$'
+    title_Q2 = r'$Q^{2} \text{ [GeV}^{2}\text{]}$'
+    title_cos = r'$\cos{\theta}$'
+    title_phi = r'$\phi \text{ [degree]}$'
+
     if W_axis and Q2_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, W_axis=True, Q2_axis=True)
 
-        title = "cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } \cos{\theta} = %.2f \pm %.2f; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['cos_th'], phase_space['delta_cos_th'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter_3d(average_list, x='W_avg', y='Q2_avg',
                             z='cs_avg', color='dcs_avg', title=title)
         fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='Q2 [GeV2]',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+                                     zaxis_title=title_cs), coloraxis_colorbar=dict(
             title="Absolute error [nb]"))
 
     elif W_axis and cos_th_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, W_axis=True, cos_th_axis=True)
 
-        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['Q2'], phase_space['delta_Q2'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter_3d(average_list, x='W_avg', y='cos_th_avg',
                             z='cs_avg', color='dcs_avg', title=title)
-        fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='cos_th',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+        fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='cos(theta)',
+                                     zaxis_title=title_cs), coloraxis_colorbar=dict(
             title="Absolute error [nb]"))
 
     elif W_axis and phi_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, W_axis=True, phi_axis=True)
 
-        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + \
-            " GeV2 ; cos_th = " + str(phase_space['cos_th']) + \
-            " +- " + str(phase_space['delta_cos_th'])
+        title = r'$\text{Av. Diff. Cross Section } Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}; \cos{\theta} = %2f \pm %.2f$' % (
+            phase_space['Q2'], phase_space['delta_Q2'], phase_space['cos_th'], phase_space['delta_cos_th'])
+
         fig = px.scatter_3d(average_list, x='W_avg', y='phi_avg',
                             z='cs_avg', color='dcs_avg', title=title)
         fig.update_layout(scene=dict(xaxis_title='W [GeV]', yaxis_title='phi [degree]',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+                                     zaxis_title=title_cs), coloraxis_colorbar=dict(
             title="Absolute error [nb]"))
 
     elif Q2_axis and cos_th_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, Q2_axis=True, cos_th_axis=True)
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter_3d(average_list, x='Q2_avg', y='cos_th_avg',
                             z='cs_avg', color='dcs_avg', title=title)
-        fig.update_layout(scene=dict(xaxis_title='Q2 [GeV2]', yaxis_title='cos_th',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+        fig.update_layout(scene=dict(xaxis_title='Q2 [GeV2]', yaxis_title='cos(theta)',
+                                     zaxis_title=title_cs), coloraxis_colorbar=dict(
             title="Absolute error [nb]"))
 
     elif Q2_axis and phi_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, Q2_axis=True, phi_axis=True)
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; cos_th = " + str(
-            phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th'])
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; \cos{\theta} = %.2f \pm %.2f$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['cos_th'], phase_space['delta_cos_th'])
+
         fig = px.scatter_3d(average_list, x='Q2_avg', y='phi_avg',
                             z='cs_avg', color='dcs_avg', title=title)
         fig.update_layout(scene=dict(xaxis_title='Q2 [GeV2]', yaxis_title='phi [degree]',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
+                                     zaxis_title=title_cs), coloraxis_colorbar=dict(
             title="Absolute error [nb]"))
 
     elif cos_th_axis and phi_axis:
         average_list = Model.Average_diff_dependency(
             phase_space, options, cos_th_axis=True, phi_axis=True)
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(
-            phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2"
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['Q2'], phase_space['delta_Q2'])
+
         fig = px.scatter_3d(average_list, x='cos_th_avg', y='phi_avg',
                             z='cs_avg', color='dcs_avg', title=title)
-        fig.update_layout(scene=dict(xaxis_title='cos_th', yaxis_title='phi [degree]',
-                                     zaxis_title='Diff. cross section [nb]'), coloraxis_colorbar=dict(
-            title="Absolute error [nb]"))
+        fig.update_layout(scene=dict(xaxis_title='cos(theta)', yaxis_title='phi [degree]',
+                          zaxis_title=title_cs), coloraxis_colorbar=dict(title="Absolute error [nb]"))
 
     elif W_axis:
         average_list = Model.Average_diff_dependency(phase_space, options, W_axis=True)
         average_list['dW'] = phase_space['delta_W']/2
 
-        title = "Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}; \cos{\theta} = %2f \pm %.2f; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['Q2'], phase_space['delta_Q2'], phase_space['cos_th'], phase_space['delta_cos_th'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter(average_list, x='W_avg', y='cs_avg', error_x='dW', error_y='dcs_avg', labels=dict(
-            W_avg='W [GeV]', cs_avg='Diff. cross section [nb]'), title=title)
+            W_avg=title_W, cs_avg=title_cs), title=title)
 
     elif Q2_axis:
         average_list = Model.Average_diff_dependency(phase_space, options, Q2_axis=True)
         average_list['dQ2'] = phase_space['delta_Q2']/2
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; cos_th = " + str(phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th']) + " ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; \cos{\theta} = %2f \pm %.2f; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['cos_th'], phase_space['delta_cos_th'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter(average_list, x='Q2_avg', y='cs_avg',
-                         error_x='dQ2', error_y='dcs_avg', labels=dict(Q2_avg='Q2 [GeV2]', cs_avg='Diff. cross section [nb]'), title=title)
+                         error_x='dQ2', error_y='dcs_avg', labels=dict(Q2_avg=title_Q2, cs_avg=title_cs), title=title)
 
     elif cos_th_axis:
         average_list = Model.Average_diff_dependency(phase_space, options, cos_th_axis=True)
         average_list['dcos_th'] = phase_space['delta_cos_th']/2
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; phi = " + str(
-            phase_space['phi']) + " +- " + str(phase_space['delta_phi']) + " degree"
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}; \phi = %.1f \pm %.1f \text{ degree}$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['Q2'], phase_space['delta_Q2'], phase_space['phi'], phase_space['delta_phi'])
+
         fig = px.scatter(average_list, x='cos_th_avg', y='cs_avg',
-                         error_x='dcos_th', error_y='dcs_avg', labels=dict(cos_th_avg='cos_th', cs_avg='Diff. cross section [nb]'), title=title)
+                         error_x='dcos_th', error_y='dcs_avg', labels=dict(cos_th_avg=title_cos, cs_avg=title_cs), title=title)
 
     elif phi_axis:
         average_list = Model.Average_diff_dependency(phase_space, options, phi_axis=True)
         average_list['dphi'] = phase_space['delta_phi']/2
 
-        title = "W = " + str(phase_space['W']) + " +- " + str(phase_space['delta_W']) + " GeV ; Q2 = " + str(phase_space['Q2']) + " +- " + str(phase_space['delta_Q2']) + " GeV2 ; cos_th = " + str(
-            phase_space['cos_th']) + " +- " + str(phase_space['delta_cos_th'])
+        title = r'$\text{Av. Diff. Cross Section } W = %.2f \pm %.2f \text{ GeV}; Q^{2} = %.2f \pm %.2f \text{ GeV}^{2}; \cos{\theta} = %2f \pm %.2f$' % (
+            phase_space['W'], phase_space['delta_W'], phase_space['Q2'], phase_space['delta_Q2'], phase_space['cos_th'], phase_space['delta_cos_th'])
+
         fig = px.scatter(average_list, x='phi_avg', y='cs_avg',
-                         error_x='dphi', error_y='dcs_avg', labels=dict(phi_avg='phi [degree]', cs_avg='Diff. cross section [nb]'), title=title)
+                         error_x='dphi', error_y='dcs_avg', labels=dict(phi_avg=title_phi, cs_avg=title_cs), title=title)
 
     # fig.show()
     return fig
@@ -133,7 +149,7 @@ def Show_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_t
         cs = cs_list['cs']
         dcs = cs_list['dcs']
 
-        fig.add_trace(go.Scatter(x=W, y=cs, name="Transverse", mode='lines',
+        fig.add_trace(go.Scatter(x=W, y=cs, name="Diff. Cross Section", mode='lines',
                       line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
         fig.add_trace(go.Scatter(name='Upper Bound', x=W, y=cs+dcs, mode='lines',
                       marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
@@ -161,7 +177,7 @@ def Show_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_t
         cs = cs_list['cs']
         dcs = cs_list['dcs']
 
-        fig.add_trace(go.Scatter(x=Q2, y=cs, name="Transverse", mode='lines',
+        fig.add_trace(go.Scatter(x=Q2, y=cs, name="Diff. Cross Section", mode='lines',
                       line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
         fig.add_trace(go.Scatter(name='Upper Bound', x=Q2, y=cs+dcs, mode='lines',
                       marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
@@ -189,7 +205,7 @@ def Show_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_t
         cs = cs_list['cs']
         dcs = cs_list['dcs']
 
-        fig.add_trace(go.Scatter(x=cos_th, y=cs, name="Transverse", mode='lines',
+        fig.add_trace(go.Scatter(x=cos_th, y=cs, name="Diff. Cross Section", mode='lines',
                       line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
         fig.add_trace(go.Scatter(name='Upper Bound', x=cos_th, y=cs+dcs, mode='lines',
                       marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
@@ -217,7 +233,7 @@ def Show_cs(phase_space: dict, options: dict, W_axis=False, Q2_axis=False, cos_t
         cs = cs_list['cs']
         dcs = cs_list['dcs']
 
-        fig.add_trace(go.Scatter(x=phi, y=cs, name="Transverse", mode='lines',
+        fig.add_trace(go.Scatter(x=phi, y=cs, name="Diff. Cross Section", mode='lines',
                       line=dict(color='rgb(31, 119, 180)')), row=1, col=1)
         fig.add_trace(go.Scatter(name='Upper Bound', x=phi, y=cs+dcs, mode='lines',
                       marker=dict(color="#444"), line=dict(width=0), showlegend=False), row=1, col=1)
