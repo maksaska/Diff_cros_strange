@@ -1183,8 +1183,12 @@ class Model:
 
             for cos_th in self.cos_th:
                 buff = {'W': [W], 'cos_th': [cos_th]}
-                buff['Sigma'] = [Su(cos_th, popt_St[0], popt_St[1],
-                                 popt_St[2], popt_St[3], popt_St[4])]
+                if self.add_factor:
+                    buff['Sigma'] = [STT_f(cos_th, popt_St[0], popt_St[1],
+                                           popt_St[2], popt_St[3], popt_St[4])]
+                else:
+                    buff['Sigma'] = [Su(cos_th, popt_St[0], popt_St[1],
+                                        popt_St[2], popt_St[3], popt_St[4])]
 
                 result = pd.concat([result, pd.DataFrame(buff)], ignore_index=True)
 
@@ -1207,15 +1211,16 @@ class Model:
                 result.loc[result['cos_th'] > x.max(), 'dSigma'] = reader.iloc[len(
                     reader)-1]['dSigma']*((result.loc[(result['cos_th'] > x.max()), 'cos_th'] - x.max())/(1 - x.max()) + 1)
 
-            result.loc[result['cos_th'] < x.min(), 'Sigma'] = Su(
-                x.min(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
-
             if not(self.add_factor):
+                result.loc[result['cos_th'] < x.min(), 'Sigma'] = Su(
+                    x.min(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
                 result.loc[result['cos_th'] < x.min(), 'Sigma'] = Su(
                     x.min(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
                 result.loc[result['cos_th'] > x.max(), 'Sigma'] = Su(
                     x.max(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
             if self.add_factor:
+                result.loc[result['cos_th'] < x.min(), 'Sigma'] = STT_f(
+                    x.min(), popt_St[0], popt_St[1], popt_St[2], popt_St[3], popt_St[4])
                 result.loc[(result['cos_th'] < x.min()), 'dSigma'] = reader.iloc[0]['dSigma'] * \
                     (result.loc[(result['cos_th'] < x.min()), 'cos_th'] + 1)/(1 + x.min())
                 result.loc[(result['cos_th'] > x.max()), 'dSigma'] = reader.iloc[len(
